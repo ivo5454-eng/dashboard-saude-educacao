@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Folha de Pessoal 2026 — Saúde e Educação</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0b2545; --navy2:#13315c; --blue:#1d6fa5; --teal:#0d7377;
+    --green:#1e8f4e; --green-bg:#e7f6ec; --red:#c0392b; --red-bg:#fdecea;
+    --amber:#b8860b; --amber-bg:#fff6e0;
+    --bg:#f4f6f9; --card:#ffffff; --border:#e1e6ec; --text:#1c2733; --muted:#5b6b7c;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:22px 28px;}
+  header .orgao{font-size:12.5px;letter-spacing:.4px;opacity:.85;text-transform:uppercase;}
+  header h1{margin:4px 0 2px;font-size:22px;font-weight:600;}
+  header .meta{font-size:13px;opacity:.9;margin-top:4px;}
+  .wrap{max-width:1200px;margin:0 auto;padding:22px 24px 60px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-btn{padding:9px 20px;border-radius:8px;border:1px solid var(--border);background:#fff;
+    font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;}
+  .tab-btn:hover{border-color:var(--blue);color:var(--blue);}
+  .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .note-box{background:#eaf3fb;border:1px solid #bcdcf5;border-left:5px solid var(--blue);
+    border-radius:8px;padding:12px 18px;margin-top:12px;font-size:12.8px;line-height:1.55;color:#153a56;}
+  .note-box b{color:#0b2545;}
+
+  .comp-table td.excedente{color:var(--red);font-weight:700;}
+  .comp-table td.zero{color:var(--muted);}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+    box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  .kpi .label{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+  .kpi .value{font-size:21px;font-weight:700;margin-top:6px;color:var(--navy);}
+  .kpi.deficit .value{color:var(--red);}
+  .kpi.superavit .value{color:var(--green);}
+  .kpi .sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
+
+  .chart-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:26px;}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+  .chart-card h4{margin:0 0 10px;font-size:13.5px;color:var(--navy2);}
+  .chart-card canvas{max-height:270px;}
+
+  .section-title{font-size:14px;font-weight:700;color:var(--navy2);margin:26px 0 10px;
+    display:flex;align-items:center;gap:8px;}
+  .section-title .dot{width:9px;height:9px;border-radius:50%;}
+  .dot.ativo{background:var(--blue);} .dot.inativo{background:var(--teal);}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;font-size:12.8px;}
+  thead th{background:#eef2f7;color:var(--navy2);font-weight:600;text-align:right;padding:9px 10px;
+    border-bottom:1px solid var(--border);white-space:nowrap;}
+  thead th:first-child, tbody td:first-child{text-align:left;}
+  tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.subtotal td{background:#f7f9fc;font-weight:700;}
+  tbody tr.total td{background:var(--navy);color:#fff;font-weight:700;}
+  .neg{color:var(--red);}
+  .pos{color:var(--green);}
+  .bar-cell{min-width:110px;}
+  .bar-track{background:#e6eaf0;border-radius:5px;height:8px;width:100%;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;background:var(--blue);}
+  .bar-fill.over{background:var(--red);}
+  .bar-label{font-size:10.5px;color:var(--muted);margin-top:3px;}
+  tr.total .bar-track{background:rgba(255,255,255,.25);}
+  tr.total .bar-label{color:rgba(255,255,255,.8);}
+
+  .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.2px;}
+  .chip.OK{background:var(--green-bg);color:var(--green);}
+  .chip.DEFICIT{background:var(--red-bg);color:var(--red);}
+  tr.total .chip.OK{background:rgba(255,255,255,.85);}
+  tr.total .chip.DEFICIT{background:#ffd9d4;color:#8c2d21;}
+
+  footer{max-width:1200px;margin:0 auto;padding:0 24px 30px;font-size:11.5px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="orgao">Secretaria de Estado de Economia do Distrito Federal — Subsecretaria de Orçamento Público</div>
+  <h1>Folha de Pessoal 2026 — Saúde e Educação</h1>
+  <div class="meta">Mês de referência: Junho/2026 &nbsp;•&nbsp; Base: planilha "7. JULHO SAÚDE EDUCAÇÃO.xlsx" (metodologia Último Mês) &nbsp;•&nbsp; Atualizado em 08/07/2026</div>
+</header>
+
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="geral">Visão Geral</button>
+    <button class="tab-btn" data-tab="Educação">Educação</button>
+    <button class="tab-btn" data-tab="Saúde">Saúde</button>
+  </div>
+
+  <!-- ===================== VISÃO GERAL ===================== -->
+  <div class="panel active" id="panel-geral">
+
+    <div class="kpi-grid" id="kpi-geral"></div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Dotação × Projeção Anual por metodologia — Total Saúde + Educação (R$ bi)</h4>
+        <canvas id="chartMetodologia"></canvas>
+      </div>
+      <div class="chart-card">
+        <h4>Composição da dotação 2026 por fonte</h4>
+        <canvas id="chartFonte"></canvas>
+      </div>
+    </div>
+
+    <div class="section-title"><span class="dot ativo"></span>Resumo por setor — método Último Mês</div>
+    <table id="tblGeral"></table>
+
+    <div class="section-title"><span class="dot inativo"></span>FCDF sempre no teto — complemento assumido pelo Tesouro do GDF</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Tesouro (execução própria + complemento) × FCDF (teto) — por setor</h4>
+        <canvas id="chartCompGeral"></canvas>
+      </div>
+      <div class="chart-card">
+        <h4>Detalhe do complemento por setor</h4>
+        <table class="comp-table" id="tblCompGeral"></table>
+      </div>
+    </div>
+    <div class="note-box">
+      <b>Nota explicativa:</b> o FCDF (Fundo Constitucional do Distrito Federal) tem dotação fixada em lei — por isso, nos gráficos abaixo,
+      ele <b>nunca aparece deficitário</b>: sua execução é sempre travada no teto da própria dotação. O valor que ultrapassaria esse teto
+      não desaparece — ele é <b>redirecionado para a projeção do Tesouro do GDF</b>, que é quem de fato cobre a diferença via crédito
+      suplementar, já que despesa de pessoal é obrigatória e tem que ser paga independentemente da fonte. Nos gráficos, a barra em
+      <b>vermelho</b> empilhada sobre o Tesouro é justamente esse complemento absorvido do FCDF.
+    </div>
+  </div>
+
+  <!-- ===================== EDUCAÇÃO / SAÚDE (preenchidos via JS) ===================== -->
+  <div class="panel" id="panel-Educação"></div>
+  <div class="panel" id="panel-Saúde"></div>
+
+</div>
+
+<footer>
+  Fonte: planilha "7. JULHO SAÚDE EDUCAÇÃO.xlsx" (abas "2026 ult mês" e " SES E SEE ") e PDF "SES - 2026.pdf", GDF/SEE. Mês de referência: Junho/2026 (meta de execução proporcional: 50,0%). Valores em R$.
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DADOS BRUTOS (fonte: planilha)
+// ══════════════════════════════════════════════════════════════
+const MES_NUM = 6; // Junho
+const META_PCT = MES_NUM/12*100;
+
+const METODOLOGIAS = {
+  labels:['Dotação 2026','Projeção Inicial','Projeção Média','Projeção Último Mês'],
+  totalGeral:[22684431659, 24407115705.71, 23714701311.24, 24466881530.55],
+  educacao:  [12333375580, 13620172892.32, 12993800540.55, 13547639732.81],
+  saude:     [10351056079, 10786942813.39, 10720900770.69, 10919241797.74],
+};
+
+const FONTES_2026 = {
+  educacao:[7823375580, 4510000000],
+  saude:[4073382958, 6277673121],
+};
+
+// projBruta = projeção anual "crua" antes de aplicar a regra do teto do FCDF
+const RAW = {
+  "Educação": {
+    ativo: [
+      { nome:"GDF Ativo (Tesouro)", dotacao:5993897474, realizado:2283575609.00, projBruta:5946521224.04 },
+      { nome:"FCDF Ativo",          dotacao:1390000000, realizado:1218548851.50, projBruta:1681849074.70 },
+    ],
+    inativo: [
+      { nome:"GDF Inativo (Tesouro)", dotacao:1829478106, realizado:975021494.00,   projBruta:2055924444.40 },
+      { nome:"FCDF Inativo",          dotacao:3120000000, realizado:1868806062.76, projBruta:3863344989.67 },
+    ],
+  },
+  "Saúde": {
+    ativo: [
+      { nome:"GDF Ativo (Tesouro)", dotacao:3209253621, realizado:1026343563.00, projBruta:2637517050.85 },
+      { nome:"FCDF Ativo",          dotacao:4397673121, realizado:2537523711.27, projBruta:4968084090.94 },
+    ],
+    inativo: [
+      { nome:"GDF Inativo (Tesouro)", dotacao:864129337,  realizado:464604978.00,  projBruta:982918264.40 },
+      { nome:"FCDF Inativo",          dotacao:1880000000, realizado:1129855638.40, projBruta:2330722391.55 },
+    ],
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// REGRA DO TETO DO FCDF
+// O FCDF nunca pode gastar além da própria dotação (teto legal). Tudo que a projeção
+// bruta do FCDF ultrapassar esse teto é redirecionado para a projeção do Tesouro do
+// GDF (que é quem paga a diferença via crédito suplementar). Resultado: FCDF sempre
+// fecha em 100% (nunca deficitário); o déficit real aparece no Tesouro.
+// ══════════════════════════════════════════════════════════════
+function ajustarParFCDF(gdfBruto, fcdfBruto){
+  const excedente = Math.max(0, fcdfBruto.projBruta - fcdfBruto.dotacao);
+  const fcdf = { nome:fcdfBruto.nome, dotacao:fcdfBruto.dotacao, realizado:fcdfBruto.realizado,
+    projAnual: Math.min(fcdfBruto.projBruta, fcdfBruto.dotacao) };
+  const gdf = { nome:gdfBruto.nome, dotacao:gdfBruto.dotacao, realizado:gdfBruto.realizado,
+    projAnual: gdfBruto.projBruta + excedente, projPropria: gdfBruto.projBruta, complemento: excedente };
+  return { gdf, fcdf, excedente };
+}
+function montarSetor(nome){
+  const raw = RAW[nome];
+  const parAtivo = ajustarParFCDF(raw.ativo[0], raw.ativo[1]);
+  const parInativo = ajustarParFCDF(raw.inativo[0], raw.inativo[1]);
+  return {
+    ativo: [parAtivo.gdf, parAtivo.fcdf],
+    inativo: [parInativo.gdf, parInativo.fcdf],
+  };
+}
+const SETORES = { "Educação": montarSetor("Educação"), "Saúde": montarSetor("Saúde") };
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+const fmt = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const fmtPct = v => v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+const fmtBi = v => 'R$ '+(v/1e9).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' bi';
+const n0 = v => v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+
+function computeRow(r){
+  const saldoDot = r.dotacao - r.realizado;
+  const saldoProj = r.dotacao - r.projAnual;
+  const pctExec = r.realizado/r.dotacao*100;
+  const pctProj = r.projAnual/r.dotacao*100;
+  const status = saldoProj < 0 ? 'DEFICIT' : 'OK';
+  return {...r, saldoDot, saldoProj, pctExec, pctProj, status};
+}
+function subtotal(rows){
+  const dotacao = rows.reduce((s,r)=>s+r.dotacao,0);
+  const realizado = rows.reduce((s,r)=>s+r.realizado,0);
+  const projAnual = rows.reduce((s,r)=>s+r.projAnual,0);
+  const row = computeRow({nome:'Subtotal', dotacao, realizado, projAnual});
+  row.status = rows.some(r=>computeRow(r).status==='DEFICIT') ? 'DEFICIT' : 'OK';
+  return row;
+}
+
+function saldoCell(v){
+  const cls = v<0 ? 'neg':'pos';
+  const txt = v<0 ? '('+n0(Math.abs(v))+')' : n0(v);
+  return `<td class="${cls}">${txt}</td>`;
+}
+function barCell(pct){
+  const over = pct>100;
+  const w = Math.min(pct,100);
+  return `<td class="bar-cell"><div class="bar-track"><div class="bar-fill ${over?'over':''}" style="width:${w}%"></div></div>
+    <div class="bar-label">${fmtPct(pct)}</div></td>`;
+}
+function rowHtml(r, cls){
+  return `<tr class="${cls||''}">
+    <td>${r.nome}</td>
+    <td>${n0(r.dotacao)}</td>
+    <td>${n0(r.realizado)}</td>
+    <td>${n0(r.projAnual)}</td>
+    <td>${n0(r.saldoDot)}</td>
+    ${saldoCell(r.saldoProj)}
+    ${barCell(r.pctExec)}
+    ${barCell(r.pctProj)}
+    <td><span class="chip ${r.status}">${r.status}</span></td>
+  </tr>`;
+}
+const TABLE_HEAD = `<thead><tr>
+  <th>Segmento</th><th>Dotação</th><th>Realizado</th><th>Proj. Anual</th>
+  <th>Saldo Dot.</th><th>Saldo Proj.</th><th>% Exec.</th><th>% Proj.</th><th>Status</th>
+</tr></thead>`;
+
+// ── Tesouro (execução própria + complemento do FCDF) × FCDF (sempre no teto) ────
+const COMP_TABLE_HEAD = `<thead><tr>
+  <th>Segmento</th><th>Dotação</th><th>Execução própria projetada</th>
+  <th>Complemento assumido do FCDF</th><th>Projeção Total</th><th>Status</th>
+</tr></thead>`;
+function compRowHtml(nome, dotacao, propria, complemento){
+  const total = propria + complemento;
+  const saldo = dotacao - total;
+  const status = saldo < 0 ? 'DEFICIT' : 'OK';
+  const compCls = complemento>0 ? 'excedente' : 'zero';
+  const compTxt = complemento>0 ? n0(complemento) : '—';
+  return `<tr>
+    <td>${nome}</td><td>${n0(dotacao)}</td><td>${n0(propria)}</td>
+    <td class="${compCls}">${compTxt}</td><td>${n0(total)}</td>
+    <td><span class="chip ${status}">${status}</span></td>
+  </tr>`;
+}
+function renderCompChart(canvasId, labels, proprias, complementos){
+  new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Execução própria / Dotação (teto)', data:proprias, backgroundColor:'#1d6fa5', stack:'s'},
+        {label:'Complemento assumido do FCDF', data:complementos, backgroundColor:'#c0392b', stack:'s'},
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:10.5}}}},
+      scales:{x:{stacked:true}, y:{stacked:true, ticks:{callback:v=>(v/1e6).toLocaleString('pt-BR')+'M'}}}}
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER: painel por setor
+// ══════════════════════════════════════════════════════════════
+function renderSetor(nome){
+  const data = SETORES[nome];
+  const ativoRows = data.ativo.map(computeRow);
+  const inativoRows = data.inativo.map(computeRow);
+  const subAtivo = subtotal(data.ativo);
+  const subInativo = subtotal(data.inativo);
+  const totalSetor = subtotal([...data.ativo, ...data.inativo]);
+
+  const kpiHtml = `
+    <div class="kpi"><div class="label">Dotação Total</div><div class="value">${fmt(totalSetor.dotacao)}</div>
+      <div class="sub">Tesouro + FCDF</div></div>
+    <div class="kpi"><div class="label">Realizado (Jan–Jun)</div><div class="value">${fmt(totalSetor.realizado)}</div>
+      <div class="sub">${fmtPct(totalSetor.pctExec)} da dotação — meta ${fmtPct(META_PCT)}</div></div>
+    <div class="kpi"><div class="label">Projeção Anual</div><div class="value">${fmt(totalSetor.projAnual)}</div>
+      <div class="sub">${fmtPct(totalSetor.pctProj)} da dotação</div></div>
+    <div class="kpi ${totalSetor.saldoProj<0?'deficit':'superavit'}">
+      <div class="label">${totalSetor.saldoProj<0?'Déficit':'Superávit'} Projetado</div>
+      <div class="value">${fmt(Math.abs(totalSetor.saldoProj))}</div>
+      <div class="sub">Dotação − Projeção Anual</div></div>`;
+
+  const tableHtml = `<table>${TABLE_HEAD}<tbody>
+      ${ativoRows.map(r=>rowHtml(r)).join('')}
+      ${rowHtml(subAtivo,'subtotal')}
+      ${inativoRows.map(r=>rowHtml(r)).join('')}
+      ${rowHtml(subInativo,'subtotal')}
+      ${rowHtml(totalSetor,'total')}
+    </tbody></table>`;
+
+  const panel = document.getElementById('panel-'+nome);
+  panel.innerHTML = `
+    <div class="kpi-grid">${kpiHtml}</div>
+    <div class="chart-grid">
+      <div class="chart-card"><h4>Dotação × Projeção Anual × Realizado — ${nome}</h4><canvas id="chartBar-${nome}"></canvas></div>
+      <div class="chart-card"><h4>% de execução por segmento (meta ${fmtPct(META_PCT)})</h4><canvas id="chartPct-${nome}"></canvas></div>
+    </div>
+    <div class="section-title"><span class="dot ativo"></span>Ativo, Inativo e Total — ${nome}</div>
+    ${tableHtml}
+
+    <div class="section-title"><span class="dot inativo"></span>FCDF sempre no teto — complemento assumido pelo Tesouro — ${nome}</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h4>Tesouro (própria + complemento) × FCDF (teto) — ${nome}</h4>
+        <canvas id="chartComp-${nome}"></canvas>
+      </div>
+      <div class="chart-card">
+        <table class="comp-table" id="tblComp-${nome}"></table>
+      </div>
+    </div>
+    <div class="note-box">
+      <b>Nota explicativa:</b> a dotação do FCDF em ${nome} é o teto legal de execução, então nos gráficos abaixo o FCDF <b>nunca aparece
+      deficitário</b> — ele fecha exatamente em 100% do teto. O valor que ultrapassaria esse teto é <b>redirecionado para a projeção do
+      Tesouro do GDF</b> (barra vermelha empilhada), que é quem assume esse complemento via crédito suplementar, pois a folha de pessoal
+      tem que ser paga independentemente da fonte.
+    </div>
+  `;
+
+  const allRows = [...ativoRows, ...inativoRows];
+  new Chart(document.getElementById('chartBar-'+nome), {
+    type:'bar',
+    data:{
+      labels:allRows.map(r=>r.nome),
+      datasets:[
+        {label:'Dotação', data:allRows.map(r=>r.dotacao), backgroundColor:'#9fb3c8'},
+        {label:'Realizado', data:allRows.map(r=>r.realizado), backgroundColor:'#1d6fa5'},
+        {label:'Projeção Anual', data:allRows.map(r=>r.projAnual), backgroundColor:'#c0392b'},
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>(v/1e6).toLocaleString('pt-BR')+'M'}}}}
+  });
+
+  new Chart(document.getElementById('chartPct-'+nome), {
+    type:'bar',
+    data:{
+      labels:allRows.map(r=>r.nome),
+      datasets:[
+        {label:'% Execução', data:allRows.map(r=>r.pctExec), backgroundColor:'#0d7377'},
+        {label:'Meta ('+fmtPct(META_PCT)+')', data:allRows.map(()=>META_PCT), type:'line',
+          borderColor:'#c0392b', borderDash:[6,4], pointRadius:0, borderWidth:2}
+      ]
+    },
+    options:{responsive:true, indexAxis:'y', plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{ticks:{callback:v=>v+'%'}}}}
+  });
+
+  // Tesouro (própria+complemento) × FCDF (teto) — Ativo e Inativo do setor
+  const gdfA = data.ativo[0], fcdfA = data.ativo[1];
+  const gdfI = data.inativo[0], fcdfI = data.inativo[1];
+  const labels = ['Tesouro Ativo','FCDF Ativo','Tesouro Inativo','FCDF Inativo'];
+  const proprias = [gdfA.projPropria, fcdfA.dotacao, gdfI.projPropria, fcdfI.dotacao];
+  const complementos = [gdfA.complemento, 0, gdfI.complemento, 0];
+  document.getElementById('tblComp-'+nome).innerHTML = `${COMP_TABLE_HEAD}<tbody>
+    ${compRowHtml('Tesouro Ativo', gdfA.dotacao, gdfA.projPropria, gdfA.complemento)}
+    ${compRowHtml('FCDF Ativo', fcdfA.dotacao, fcdfA.dotacao, 0)}
+    ${compRowHtml('Tesouro Inativo', gdfI.dotacao, gdfI.projPropria, gdfI.complemento)}
+    ${compRowHtml('FCDF Inativo', fcdfI.dotacao, fcdfI.dotacao, 0)}
+  </tbody>`;
+  renderCompChart('chartComp-'+nome, labels, proprias, complementos);
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER: visão geral
+// ══════════════════════════════════════════════════════════════
+function renderGeral(){
+  const dot = METODOLOGIAS.totalGeral[0];
+  const projMes = METODOLOGIAS.totalGeral[3];
+  const realJanJun = SETORES['Educação'].ativo.concat(SETORES['Educação'].inativo,SETORES['Saúde'].ativo,SETORES['Saúde'].inativo)
+      .reduce((s,r)=>s+r.realizado,0);
+  const saldoProj = dot - projMes;
+
+  document.getElementById('kpi-geral').innerHTML = `
+    <div class="kpi"><div class="label">Dotação 2026 (Saúde+Educação)</div><div class="value">${fmt(dot)}</div>
+      <div class="sub">Tesouro ${fmtBi(11896758538)} + FCDF ${fmtBi(10787673121)}</div></div>
+    <div class="kpi"><div class="label">Realizado Jan–Jun</div><div class="value">${fmt(realJanJun)}</div>
+      <div class="sub">${fmtPct(realJanJun/dot*100)} da dotação</div></div>
+    <div class="kpi"><div class="label">Projeção Anual (Último Mês)</div><div class="value">${fmt(projMes)}</div>
+      <div class="sub">${fmtPct(projMes/dot*100)} da dotação</div></div>
+    <div class="kpi deficit"><div class="label">Déficit Projetado</div><div class="value">${fmt(Math.abs(saldoProj))}</div>
+      <div class="sub">Varia de R$ 1,03 bi (Média) a R$ 1,78 bi (Último Mês)</div></div>`;
+
+  new Chart(document.getElementById('chartMetodologia'), {
+    type:'bar',
+    data:{
+      labels:METODOLOGIAS.labels,
+      datasets:[
+        {label:'Educação', data:METODOLOGIAS.educacao.map(v=>v/1e9), backgroundColor:'#1d6fa5'},
+        {label:'Saúde', data:METODOLOGIAS.saude.map(v=>v/1e9), backgroundColor:'#0d7377'},
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}},
+      scales:{y:{title:{display:true,text:'R$ bilhões'}}}}
+  });
+
+  new Chart(document.getElementById('chartFonte'), {
+    type:'doughnut',
+    data:{
+      labels:['Educação — Tesouro','Educação — FCDF','Saúde — Tesouro','Saúde — FCDF'],
+      datasets:[{data:[...FONTES_2026.educacao, ...FONTES_2026.saude],
+        backgroundColor:['#1d6fa5','#8fb8d8','#0d7377','#8fd0ce']}]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:10.5}}}}}
+  });
+
+  const rows = ['Educação','Saúde'].map(nome=>{
+    const t = subtotal([...SETORES[nome].ativo, ...SETORES[nome].inativo]);
+    t.nome = nome;
+    return t;
+  });
+  const totalGeralRow = computeRow({nome:'TOTAL GERAL', dotacao:dot, realizado:realJanJun, projAnual:projMes});
+  document.getElementById('tblGeral').innerHTML = `${TABLE_HEAD}<tbody>
+    ${rows.map(r=>rowHtml(r)).join('')}
+    ${rowHtml(totalGeralRow,'total')}
+  </tbody>`;
+
+  // Tesouro (própria+complemento) × FCDF (teto) — agregado por setor
+  function agregaSetor(nome){
+    const d = SETORES[nome];
+    const gdfDotacao = d.ativo[0].dotacao + d.inativo[0].dotacao;
+    const gdfPropria = d.ativo[0].projPropria + d.inativo[0].projPropria;
+    const complemento = d.ativo[0].complemento + d.inativo[0].complemento;
+    const fcdfDotacao = d.ativo[1].dotacao + d.inativo[1].dotacao;
+    return { gdfDotacao, gdfPropria, complemento, fcdfDotacao };
+  }
+  const eA = agregaSetor('Educação'), sA = agregaSetor('Saúde');
+  const labels = ['Tesouro Educação','FCDF Educação','Tesouro Saúde','FCDF Saúde'];
+  const proprias = [eA.gdfPropria, eA.fcdfDotacao, sA.gdfPropria, sA.fcdfDotacao];
+  const complementos = [eA.complemento, 0, sA.complemento, 0];
+  document.getElementById('tblCompGeral').innerHTML = `${COMP_TABLE_HEAD}<tbody>
+    ${compRowHtml('Tesouro Educação', eA.gdfDotacao, eA.gdfPropria, eA.complemento)}
+    ${compRowHtml('FCDF Educação', eA.fcdfDotacao, eA.fcdfDotacao, 0)}
+    ${compRowHtml('Tesouro Saúde', sA.gdfDotacao, sA.gdfPropria, sA.complemento)}
+    ${compRowHtml('FCDF Saúde', sA.fcdfDotacao, sA.fcdfDotacao, 0)}
+  </tbody>`;
+  renderCompChart('chartCompGeral', labels, proprias, complementos);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+renderGeral();
+renderSetor('Educação');
+renderSetor('Saúde');
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
