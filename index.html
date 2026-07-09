@@ -34,6 +34,8 @@
 
   .comp-table td.excedente{color:var(--red);font-weight:700;}
   .comp-table td.zero{color:var(--muted);}
+  td.excesso-val{color:var(--amber);font-weight:700;}
+  td.excesso-zero{color:var(--muted);}
 
   .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
   .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;
@@ -96,6 +98,7 @@
     <button class="tab-btn active" data-tab="geral">Visão Geral</button>
     <button class="tab-btn" data-tab="Educação">Educação</button>
     <button class="tab-btn" data-tab="Saúde">Saúde</button>
+    <button class="tab-btn" data-tab="excessos">Visão Geral c/ Excessos</button>
   </div>
 
   <!-- ===================== VISÃO GERAL ===================== -->
@@ -140,6 +143,9 @@
   <!-- ===================== EDUCAÇÃO / SAÚDE (preenchidos via JS) ===================== -->
   <div class="panel" id="panel-Educação"></div>
   <div class="panel" id="panel-Saúde"></div>
+
+  <!-- ===================== VISÃO GERAL C/ EXCESSOS (preenchido via JS) ===================== -->
+  <div class="panel" id="panel-excessos"></div>
 
 </div>
 
@@ -482,11 +488,109 @@ function renderGeral(){
 }
 
 // ══════════════════════════════════════════════════════════════
+// VISÃO GERAL C/ EXCESSOS — possíveis excessos identificados que
+// poderiam reduzir o déficit projetado. Divisão simples por
+// Educação/Saúde × Ativo/Inativo (totais combinados Tesouro+FCDF,
+// sem exibir a quebra por fonte). Sem gráficos.
+// ══════════════════════════════════════════════════════════════
+const EXCESSOS = {
+  "Educação": { ativo: 0, inativo: 158527000 },
+  "Saúde":    { ativo: 0, inativo: 350000000 },
+};
+
+const EXC_TABLE_HEAD = `<thead><tr>
+  <th>Segmento</th><th>Dotação</th><th>Realizado</th><th>Proj. Anual</th>
+  <th>Déficit Projetado</th><th>Possível Excesso (Securitização)</th><th>Novo Déficit</th><th>Status</th>
+</tr></thead>`;
+
+function excRowHtml(nome, base, excesso, cls){
+  const saldoOrig = base.dotacao - base.projAnual;
+  const novoDeficit = saldoOrig + excesso;
+  const status = novoDeficit < 0 ? 'DEFICIT' : 'OK';
+  const excCls = excesso > 0 ? 'excesso-val' : 'excesso-zero';
+  const excTxt = excesso > 0 ? n0(excesso) : '—';
+  return `<tr class="${cls||''}">
+    <td>${nome}</td>
+    <td>${n0(base.dotacao)}</td>
+    <td>${n0(base.realizado)}</td>
+    <td>${n0(base.projAnual)}</td>
+    ${saldoCell(saldoOrig)}
+    <td class="${excCls}">${excTxt}</td>
+    ${saldoCell(novoDeficit)}
+    <td><span class="chip ${status}">${status}</span></td>
+  </tr>`;
+}
+
+function renderExcessos(){
+  const setoresData = ['Educação','Saúde'].map(setor=>{
+    const rows = ['ativo','inativo'].map(tipo=>{
+      const base = subtotal(SETORES[setor][tipo]);
+      const excesso = EXCESSOS[setor][tipo];
+      return { nome: setor+' — '+(tipo==='ativo'?'Ativo':'Inativo'), base, excesso };
+    });
+    const dotacao = rows.reduce((s,r)=>s+r.base.dotacao,0);
+    const realizado = rows.reduce((s,r)=>s+r.base.realizado,0);
+    const projAnual = rows.reduce((s,r)=>s+r.base.projAnual,0);
+    const excesso = rows.reduce((s,r)=>s+r.excesso,0);
+    const subtotalRow = { nome:'Subtotal '+setor, base:{dotacao,realizado,projAnual}, excesso };
+    return { setor, rows, subtotalRow };
+  });
+
+  const dotTotal = setoresData.reduce((s,d)=>s+d.subtotalRow.base.dotacao,0);
+  const realTotal = setoresData.reduce((s,d)=>s+d.subtotalRow.base.realizado,0);
+  const projTotal = setoresData.reduce((s,d)=>s+d.subtotalRow.base.projAnual,0);
+  const excTotal = setoresData.reduce((s,d)=>s+d.subtotalRow.excesso,0);
+  const saldoOrigTotal = dotTotal - projTotal;
+  const saldoAjustTotal = saldoOrigTotal + excTotal;
+
+  const kpiHtml = `
+    <div class="kpi"><div class="label">Dotação Total (Saúde+Educação)</div><div class="value">${fmt(dotTotal)}</div>
+      <div class="sub">Ativo + Inativo, Tesouro + FCDF</div></div>
+    <div class="kpi deficit"><div class="label">Déficit Projetado (original)</div><div class="value">${fmt(Math.abs(saldoOrigTotal))}</div>
+      <div class="sub">Metodologia Último Mês, sem excessos</div></div>
+    <div class="kpi"><div class="label">Possível Excesso — Securitização</div><div class="value">${fmt(excTotal)}</div>
+      <div class="sub">Saúde Inativo ${fmt(EXCESSOS['Saúde'].inativo)} + Educação Inativo ${fmt(EXCESSOS['Educação'].inativo)}</div></div>
+    <div class="kpi ${saldoAjustTotal<0?'deficit':'superavit'}">
+      <div class="label">Novo ${saldoAjustTotal<0?'Déficit':'Superávit'}</div>
+      <div class="value">${fmt(Math.abs(saldoAjustTotal))}</div>
+      <div class="sub">Déficit projetado após abatimento via securitização</div></div>`;
+
+  const rowsHtml = setoresData.map(d=>
+    d.rows.map(r=>excRowHtml(r.nome, r.base, r.excesso)).join('') +
+    excRowHtml(d.subtotalRow.nome, d.subtotalRow.base, d.subtotalRow.excesso, 'subtotal')
+  ).join('');
+  const totalRow = excRowHtml('TOTAL GERAL',
+    { dotacao: dotTotal, realizado: realTotal, projAnual: projTotal },
+    excTotal, 'total');
+
+  const panel = document.getElementById('panel-excessos');
+  panel.innerHTML = `
+    <div class="kpi-grid">${kpiHtml}</div>
+    <div class="section-title"><span class="dot ativo"></span>Educação e Saúde — Ativo/Inativo com possíveis excessos</div>
+    <table>${EXC_TABLE_HEAD}<tbody>
+      ${rowsHtml}
+      ${totalRow}
+    </tbody></table>
+    <div class="note-box">
+      <b>Nota explicativa:</b> o valor de <b>possível excesso</b> apontado nos segmentos Inativos de Saúde
+      (${fmt(EXCESSOS['Saúde'].inativo)}) e Educação (${fmt(EXCESSOS['Educação'].inativo)}), totalizando ${fmt(excTotal)}, refere-se
+      a uma <b>operação de securitização</b> — não a uma revisão da metodologia de cálculo da folha. Por isso, a <b>Proj. Anual
+      não se altera</b>: a projeção de despesa com pessoal permanece a mesma (metodologia Último Mês). O que muda é o
+      <b>déficit final</b>, já que a receita obtida via securitização pode ser usada para cobrir parte do déficit projetado desses
+      grupos — daí a coluna "Novo Déficit". Os valores de dotação, realizado e projeção aqui são os totais combinados
+      (Tesouro + FCDF) de cada segmento, sem a quebra por fonte de recurso. Trata-se de um cenário alternativo e não substitui a
+      projeção base (abas Educação/Saúde).
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
 renderGeral();
 renderSetor('Educação');
 renderSetor('Saúde');
+renderExcessos();
 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
