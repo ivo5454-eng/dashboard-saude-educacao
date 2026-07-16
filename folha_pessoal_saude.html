@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folha de Pessoal 2026 – Saúde</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; font-size: 13px; }
+
+.header {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  color: white; padding: 12px 28px;
+  display: flex; align-items: center; gap: 16px;
+}
+.header-logo { width: 42px; height: 42px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #1565c0; font-size: 11px; flex-shrink: 0; }
+.header-text h1 { font-size: 10px; font-weight: 400; opacity: .8; }
+.header-text h2 { font-size: 14px; font-weight: 800; margin: 1px 0; }
+.header-meta { margin-left: auto; text-align: right; }
+.header-meta .setor { font-size: 20px; font-weight: 900; }
+.header-meta .ref   { font-size: 10px; opacity: .7; margin-top: 1px; }
+
+.container { padding: 16px 24px; max-width: 1300px; margin: 0 auto; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.kpi { background: white; border-radius: 8px; padding: 13px 15px; box-shadow: 0 1px 3px rgba(0,0,0,.08); border-left: 3px solid; }
+.kpi.blue   { border-color: #1565c0; }
+.kpi.teal   { border-color: #00838f; }
+.kpi.amber  { border-color: #e65100; }
+.kpi.red    { border-color: #c62828; }
+.kpi.green  { border-color: #2e7d32; }
+.kpi-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; color: #666; margin-bottom: 4px; }
+.kpi-val { font-size: 18px; font-weight: 800; line-height: 1.1; }
+.kpi-sub { font-size: 9.5px; color: #888; margin-top: 3px; }
+.badge { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 1px 7px; border-radius: 20px; margin-top: 4px; }
+.badge-ok  { background: #e8f5e9; color: #2e7d32; }
+.badge-def { background: #ffebee; color: #c62828; }
+.badge-neu { background: #e3f2fd; color: #1565c0; }
+.badge-att { background: #fff8e1; color: #f57f17; }
+
+.table-card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; margin-bottom: 16px; }
+.table-title { padding: 10px 16px; font-size: 12px; font-weight: 800; color: #1565c0; border-bottom: 2px solid #e8eaf6; display: flex; align-items: center; justify-content: space-between; }
+.table-sub { font-size: 10px; color: #888; font-weight: 400; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead tr { background: #1565c0; color: white; }
+thead th { padding: 8px 10px; text-align: right; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
+thead th:first-child { text-align: left; padding-left: 16px; }
+tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+tbody tr:hover { background: #f5f7ff; }
+tbody td { padding: 10px 10px; text-align: right; white-space: nowrap; }
+tbody td:first-child { text-align: left; padding-left: 16px; font-weight: 700; color: #222; }
+tr.row-ativo   td:first-child { color: #1565c0; }
+tr.row-inativo td:first-child { color: #37474f; }
+tr.row-total { background: #1a237e !important; border-top: 2px solid #283593; }
+tr.row-total td { color: white; font-weight: 800; font-size: 12.5px; padding: 11px 10px; }
+tr.row-total td:first-child { padding-left: 16px; font-size: 13px; }
+
+.prog-wrap { background: #e8eaf6; border-radius: 3px; height: 5px; margin-top: 3px; width: 100%; min-width: 70px; }
+.prog-bar  { height: 5px; border-radius: 3px; }
+.prog-ok   { background: #43a047; }
+.prog-def  { background: #e53935; }
+.prog-att  { background: #f57f17; }
+.pct-num   { font-size: 11.5px; font-weight: 700; }
+
+.chip     { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; }
+.chip-ok  { background: #e8f5e9; color: #2e7d32; }
+.chip-def { background: #ffebee; color: #c62828; }
+.chip-att { background: #fff8e1; color: #f57f17; }
+.chip-def-inv { background: #ff6b6b; color: white; }
+
+.neg { color: #c62828; } .pos { color: #2e7d32; }
+.neg-inv { color: #ff8a80; } .pos-inv { color: #69db7c; }
+
+.chart-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; margin-bottom: 16px; }
+.chart-card { background: white; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.chart-title { font-size: 11.5px; font-weight: 700; color: #333; margin-bottom: 2px; }
+.chart-sub   { font-size: 10px; color: #888; margin-bottom: 10px; }
+.chart-wrap  { position: relative; height: 130px; }
+
+.footer { text-align: center; font-size: 10px; color: #aaa; padding: 10px; }
+
+@media (max-width: 900px) {
+  .kpi-row   { grid-template-columns: 1fr 1fr; }
+  .chart-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONFIGURAÇÃO — edite apenas esta seção
+// ══════════════════════════════════════════════════════
+const CFG = {
+  orgao:      "SECRETARIA DE ESTADO DE ECONOMIA DO DISTRITO FEDERAL",
+  titulo:     "DETALHE POR SETOR — Folha de Pessoal",
+  ano:        2026,
+  setor:      "SAÚDE",
+  mesRef:     "Jun/2026",
+  numMes:     6,
+  atualizado: "08/07/2026",
+};
+
+// status: "OK", "DEFICIT" ou "ATENCAO"
+const LINHAS = [
+  {
+    nome:      "Ativo",
+    dotacao:   7606926742.00,
+    realizado: 3563867274.27,
+    projAnual: 7605601141.79,
+    saldoDot:  4043059467.73,
+    saldoProj: 1325600.21,
+    pctExec:   46.9,
+    pctProj:   100.0,
+    status:    "ATENCAO",
+  },
+  {
+    nome:      "Inativo",
+    dotacao:   2744129337.00,
+    realizado: 1594460616.40,
+    projAnual: 3313640655.95,
+    saldoDot:  1149668720.60,
+    saldoProj: -569511318.95,
+    pctExec:   58.1,
+    pctProj:   120.8,
+    status:    "DEFICIT",
+  },
+];
+// ══════════════════════════════════════════════════════
+
+function sum(key) { return LINHAS.reduce((a, r) => a + r[key], 0); }
+const TOTAL = {
+  dotacao:   sum('dotacao'),
+  realizado: sum('realizado'),
+  projAnual: sum('projAnual'),
+  saldoDot:  sum('saldoDot'),
+  saldoProj: sum('saldoProj'),
+  pctExec:   +(sum('realizado') / sum('dotacao') * 100).toFixed(1),
+  pctProj:   +(sum('projAnual') / sum('dotacao') * 100).toFixed(1),
+  status:    LINHAS.some(r => r.status === 'DEFICIT') ? 'DEFICIT' : (LINHAS.some(r => r.status === 'ATENCAO') ? 'ATENCAO' : 'OK'),
+};
+
+function fBRL(v, dec=0) {
+  if (v == null) return '–';
+  const neg = v < 0;
+  const s = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(Math.abs(v));
+  return neg ? `(${s})` : s;
+}
+function fBi(v) {
+  return 'R$ ' + new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Math.abs(v) / 1e9) + ' Bi';
+}
+const META = +((CFG.numMes / 12) * 100).toFixed(1);
+
+function chipClass(s)  { return s === 'OK' ? 'chip-ok' : s === 'ATENCAO' ? 'chip-att' : 'chip-def'; }
+function progClass(s)  { return s === 'OK' ? 'prog-ok' : s === 'ATENCAO' ? 'prog-att' : 'prog-def'; }
+function barColor(s)   { return s === 'OK' ? 'rgba(46,125,50,.8)' : s === 'ATENCAO' ? 'rgba(245,127,23,.8)' : 'rgba(198,40,40,.8)'; }
+</script>
+
+<div class="header">
+  <div class="header-logo">GDF</div>
+  <div class="header-text">
+    <h1 id="hOrgao"></h1>
+    <h2 id="hTitulo"></h2>
+  </div>
+  <div class="header-meta">
+    <div class="setor" id="hSetor"></div>
+    <div class="ref"   id="hRef"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="table-card">
+    <div class="table-title">
+      Execução por grupo
+      <span class="table-sub">Valores em R$ · Mês: <b id="tMes"></b> · Atualizado em <b id="tAtu"></b></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:left">Grupo</th>
+          <th>Dot. Atualizada</th>
+          <th>Realizado</th>
+          <th>Proj. Anual</th>
+          <th>Saldo Dot.</th>
+          <th>Saldo Proj.</th>
+          <th>% Exec.</th>
+          <th>% Proj.</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="mainBody"></tbody>
+    </table>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="chart-title">Dot. Atualizada vs Projeção Anual vs Realizado</div>
+      <div class="chart-sub">R$ bilhões</div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">% Execução vs Meta proporcional do mês (<span id="metaLbl"></span>)</div>
+      <div class="chart-sub">Realizado ÷ Dot. Atualizada</div>
+      <div class="chart-wrap"><canvas id="execChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer" id="footer"></div>
+
+<script>
+document.getElementById('hOrgao').innerHTML  = CFG.orgao + '<br><span style="font-size:10.5px;font-weight:600;opacity:.9">SUOP · Subsecretaria de Orçamento Público &nbsp;·&nbsp; CODEP · Coordenação de Gestão de Despesas com Pessoal</span>';
+document.getElementById('hTitulo').textContent = CFG.titulo + ' ' + CFG.ano;
+document.getElementById('hSetor').textContent  = CFG.setor;
+document.getElementById('hRef').textContent    = 'Mês: ' + CFG.mesRef + '  |  Atualizado: ' + CFG.atualizado;
+document.getElementById('tMes').textContent    = CFG.mesRef;
+document.getElementById('tAtu').textContent    = CFG.atualizado;
+document.getElementById('metaLbl').textContent = META + '%';
+document.getElementById('footer').textContent  = 'Folha de Pessoal ' + CFG.ano + ' — ' + CFG.setor + ' · Ref. ' + CFG.mesRef + ' · Atualizado em ' + CFG.atualizado;
+
+// KPIs
+(function() {
+  const defOk = TOTAL.saldoProj >= 0;
+  const isAtt = TOTAL.status === 'ATENCAO';
+  const cards = [
+    { cls:'blue',  lbl:'Dot. Atualizada — '+CFG.setor, val:fBi(TOTAL.dotacao),   sub:'Dotação total do exercício '+CFG.ano, badge:'badge-neu', badgeTxt: CFG.setor },
+    { cls:'teal',  lbl:'Realizado ('+CFG.mesRef+')',   val:fBi(TOTAL.realizado),  sub:TOTAL.pctExec+'% da dot. atualizada',  badge:'badge-neu', badgeTxt: TOTAL.pctExec+'% executado' },
+    { cls:'amber', lbl:'Projeção Anual '+CFG.ano,      val:fBi(TOTAL.projAnual),  sub:'Projeção: '+TOTAL.pctProj+'% da dotação',
+      badge: TOTAL.pctProj > 100 ? 'badge-def' : 'badge-ok',
+      badgeTxt: TOTAL.pctProj > 100 ? '▲ Acima da dotação' : '▼ Dentro da dotação' },
+    { cls: defOk ? 'green' : 'red', lbl:(defOk?'Superávit':'Déficit')+' projetado',
+      val: (TOTAL.saldoProj < 0 ? '–' : '') + fBi(Math.abs(TOTAL.saldoProj)),
+      sub:'Saldo projeção vs dotação',
+      badge: defOk ? 'badge-ok' : (isAtt ? 'badge-att' : 'badge-def'),
+      badgeTxt: defOk ? '▲ Superávit' : (isAtt ? '⚠ Atenção' : '▼ Déficit') },
+  ];
+  const row = document.getElementById('kpiRow');
+  cards.forEach(c => {
+    row.innerHTML += `<div class="kpi ${c.cls}"><div class="kpi-lbl">${c.lbl}</div><div class="kpi-val">${c.val}</div><div class="kpi-sub">${c.sub}</div><span class="badge ${c.badge}">${c.badgeTxt}</span></div>`;
+  });
+})();
+
+// Tabela
+(function() {
+  const tb = document.getElementById('mainBody');
+  LINHAS.forEach((r, i) => {
+    const neg  = r.saldoProj < 0;
+    const barW = Math.min(r.pctExec, 100);
+    const cls  = i === 0 ? 'row-ativo' : 'row-inativo';
+    tb.innerHTML += `<tr class="${cls}">
+      <td>${r.nome}</td>
+      <td>${fBRL(r.dotacao)}</td>
+      <td>${fBRL(r.realizado)}</td>
+      <td>${fBRL(r.projAnual)}</td>
+      <td>${fBRL(r.saldoDot)}</td>
+      <td class="${neg?'neg':'pos'}">${fBRL(r.saldoProj)}</td>
+      <td>
+        <div class="pct-num">${r.pctExec}%</div>
+        <div class="prog-wrap"><div class="prog-bar ${progClass(r.status)}" style="width:${barW}%"></div></div>
+      </td>
+      <td class="${r.pctProj>100?'neg':'pos'}" style="font-weight:700">${r.pctProj}%</td>
+      <td><span class="chip ${chipClass(r.status)}">${r.status==='ATENCAO'?'ATENÇÃO':r.status}</span></td>
+    </tr>`;
+  });
+
+  const negT = TOTAL.saldoProj < 0;
+  tb.innerHTML += `<tr class="row-total">
+    <td>TOTAL ${CFG.setor}</td>
+    <td>${fBRL(TOTAL.dotacao)}</td>
+    <td>${fBRL(TOTAL.realizado)}</td>
+    <td>${fBRL(TOTAL.projAnual)}</td>
+    <td>${fBRL(TOTAL.saldoDot)}</td>
+    <td class="${negT?'neg-inv':'pos-inv'}">${fBRL(TOTAL.saldoProj)}</td>
+    <td>${TOTAL.pctExec}%</td>
+    <td class="${TOTAL.pctProj>100?'neg-inv':'pos-inv'}">${TOTAL.pctProj}%</td>
+    <td><span class="chip ${TOTAL.status==='DEFICIT'?'chip-def-inv':TOTAL.status==='ATENCAO'?'chip-att':'chip-ok'}">${TOTAL.status==='ATENCAO'?'ATENÇÃO':TOTAL.status}</span></td>
+  </tr>`;
+})();
+
+// Gráfico barras
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: LINHAS.map(r => r.nome),
+    datasets: [
+      { label:'Dot. Atualizada', data:LINHAS.map(r=>r.dotacao),  backgroundColor:'rgba(21,101,192,.75)', borderRadius:4 },
+      { label:'Proj. Anual',     data:LINHAS.map(r=>r.projAnual),backgroundColor:'rgba(198,40,40,.75)',  borderRadius:4 },
+      { label:'Realizado',       data:LINHAS.map(r=>r.realizado),backgroundColor:'rgba(46,125,50,.75)',  borderRadius:4 },
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:11, padding:8 } }, tooltip:{ callbacks:{ label: ctx=>' '+fBi(ctx.raw) } } },
+    scales: { x:{ grid:{display:false}, ticks:{font:{size:10}} }, y:{ grid:{color:'#f0f0f0'}, ticks:{ callback:v=>'R$ '+(v/1e9).toFixed(0)+' Bi', font:{size:10} } } }
+  }
+});
+
+// Gráfico % exec
+new Chart(document.getElementById('execChart'), {
+  type: 'bar',
+  data: {
+    labels: LINHAS.map(r => r.nome),
+    datasets: [
+      { label:'% Executado', data:LINHAS.map(r=>r.pctExec), backgroundColor:LINHAS.map(r=>barColor(r.status)), borderRadius:4 },
+      { label:'Meta ('+META+'%)', data:LINHAS.map(()=>META), type:'line', borderColor:'#ff6f00', borderWidth:2, borderDash:[5,3], pointRadius:0, fill:false }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:11, padding:8 } }, tooltip:{ callbacks:{ label: ctx=>' '+ctx.raw+'%' } } },
+    scales: {
+      x:{ grid:{color:'#f0f0f0'}, max: Math.max(...LINHAS.map(r=>r.pctExec), META)+10, ticks:{ callback:v=>v+'%', font:{size:10} } },
+      y:{ grid:{display:false}, ticks:{ font:{size:10} } }
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QDD SEAPE – Empenhado x Liquidado por PT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #1a1a2e; }
+.header { background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%); color: white; padding: 18px 32px; display: flex; align-items: center; gap: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.header-logo { width: 52px; height: 52px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #1565c0; font-size: 13px; flex-shrink: 0; }
+.header-text h1 { font-size: 13px; font-weight: 400; opacity: .85; }
+.header-text h2 { font-size: 15px; font-weight: 700; margin: 2px 0; }
+.header-text h3 { font-size: 12px; font-weight: 400; opacity: .75; }
+.header-badge { margin-left: auto; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 8px 16px; text-align: right; white-space: nowrap; }
+.header-badge .acao { font-size: 16px; font-weight: 800; }
+.header-badge .data { font-size: 11px; opacity: .7; margin-top: 2px; }
+.container { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: white; border-radius: 12px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.08); border-left: 4px solid transparent; }
+.kpi-card.blue { border-color: #1565c0; } .kpi-card.green { border-color: #2e7d32; } .kpi-card.orange { border-color: #e65100; } .kpi-card.purple { border-color: #6a1b9a; }
+.kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #666; margin-bottom: 8px; font-weight: 600; }
+.kpi-value { font-size: 22px; font-weight: 800; color: #0d3d5c; }
+.kpi-sub { font-size: 11px; color: #888; margin-top: 5px; }
+.kpi-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
+.badge-up { background: #e8f5e9; color: #2e7d32; } .badge-down { background: #ffebee; color: #c62828; }
+.charts-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: white; border-radius: 12px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.chart-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 4px; }
+.chart-sub { font-size: 11px; color: #888; margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 300px; }
+.year-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.year-btn { padding: 4px 14px; border-radius: 20px; border: 1.5px solid #ddd; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.year-btn:hover { border-color: #1565c0; color: #1565c0; }
+.year-btn.active { background: #1565c0; color: white; border-color: #1565c0; }
+.table-card { background: white; border-radius: 12px; padding: 20px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; overflow-x: auto; }
+.table-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead tr { background: #1565c0; color: white; }
+thead th { padding: 8px 9px; text-align: right; font-weight: 600; white-space: nowrap; font-size: 11px; }
+thead tr:first-child th { border-bottom: 1px solid rgba(255,255,255,.25); }
+thead th.year-head { text-align: center; font-size: 12px; }
+thead th:first-child { text-align: left; border-radius: 6px 0 0 6px; }
+thead th:last-child { border-radius: 0 6px 6px 0; }
+thead th.grp-start { border-left: 2px solid rgba(255,255,255,.4); }
+tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+tbody tr:hover { background: #e8eaf6; }
+tbody td { padding: 7px 9px; text-align: right; white-space: nowrap; }
+tbody td:first-child { text-align: left; font-weight: 700; color: #1565c0; }
+tbody td.grp-start { border-left: 2px solid #dbe4ea; }
+tr.row-total td { background: #f0f7fc; font-weight: 800; color: #0d3d5c; border-top: 2px solid #c8dfe8; }
+.total-col { font-weight: 800; }
+.pct-high { color: #2e7d32; font-weight: 700; } .pct-low { color: #c62828; font-weight: 700; }
+.cell-emp { color: #1565c0; } .cell-liq { color: #2e7d32; }
+.legend-row { display: flex; gap: 16px; align-items: center; font-size: 11px; color: #666; margin-top: 12px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+.footer { text-align: center; font-size: 11px; color: #aaa; padding: 16px; }
+@media (max-width: 1000px) { .kpi-grid { grid-template-columns: 1fr 1fr; } .charts-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">SEAPE</div>
+  <div class="header-text">
+    <h1>SECRETARIA DE ESTADO DE ADMINISTRAÇÃO PENITENCIÁRIA DO DISTRITO FEDERAL</h1>
+    <h2>Quadro de Detalhamento de Despesa – QDD</h2>
+    <h3>UO: 64101 – SEAPE &nbsp;·&nbsp; Gestão: 1 &nbsp;·&nbsp; Empenhado x Liquidado por Programa de Trabalho</h3>
+  </div>
+  <div class="header-badge">
+    <div class="acao">2022 – 2025</div>
+    <div class="data">Principais Programas de Trabalho</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">Empenhado 2025</div>
+      <div class="kpi-value" id="kpiEmp2025"></div>
+      <div class="kpi-sub" id="kpiEmpSub"></div>
+      <span class="kpi-badge badge-up" id="kpiEmpVar"></span>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Liquidado 2025</div>
+      <div class="kpi-value" id="kpiLiq2025"></div>
+      <div class="kpi-sub" id="kpiLiqSub"></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">% Liquidado / Empenhado 2025</div>
+      <div class="kpi-value" id="kpiPct2025"></div>
+      <div class="kpi-sub" id="kpiPctSub"></div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">Dotação Autorizada 2025</div>
+      <div class="kpi-value" id="kpiDot2025"></div>
+      <div class="kpi-sub">Soma dos Programas de Trabalho listados</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Evolução anual – Empenhado x Liquidado</div>
+      <div class="chart-sub">Total SEAPE, todos os PTs · 2022–2025</div>
+      <div class="chart-wrap"><canvas id="barYearChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Comparação dos PTs por ano</div>
+      <div class="chart-sub">Selecione o indicador</div>
+      <div class="year-filter" id="metricFilter"></div>
+      <div class="chart-wrap" style="height:340px;"><canvas id="barPtChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header-row">
+      <div>
+        <div class="chart-title">Detalhamento por Programa de Trabalho – anos em coluna</div>
+        <div class="chart-sub" style="margin:0">Valores em R$ · sem detalhamento de Natureza de Despesa</div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#1565c0"></div> Empenhado</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2e7d32"></div> Liquidado</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr id="tableHeadYears"></tr>
+        <tr id="tableHeadMetrics"></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  Fonte: QDD SEAPE 4Ex - Princ PTs &nbsp;|&nbsp; Dados extraídos da planilha original (Subtotais por PT) &nbsp;|&nbsp; SEEC/SEFIN/SUOP
+</div>
+
+<script>
+const DATA = [
+{"ano": 2022, "ptCode": "06.122.8217.8502.0112", "ptLabel": "Administração de Pessoal", "dotAut": 276765036, "empenhado": 276765033.38, "liquidado": 276638450.38},
+{"ano": 2022, "ptCode": "06.122.8217.8504.0094", "ptLabel": "Concessão de Benefícios a Servidores", "dotAut": 17787862, "empenhado": 17787861.52, "liquidado": 17767896.52},
+{"ano": 2022, "ptCode": "06.126.8217.1471.0099", "ptLabel": "Modernização de Sistema de Informação", "dotAut": 1116855, "empenhado": 1116855, "liquidado": 1113105},
+{"ano": 2022, "ptCode": "06.421.6217.2727.0006", "ptLabel": "Manutenção do Sistema Penitenciário do DF", "dotAut": 52882082, "empenhado": 52881756.99, "liquidado": 48466027.21},
+{"ano": 2022, "ptCode": "06.421.6217.2890.0003", "ptLabel": "Realização de Ações Alternativas Penais", "dotAut": 2796847, "empenhado": 2796846.57, "liquidado": 2545965.65},
+{"ano": 2022, "ptCode": "06.422.6217.2540.0002", "ptLabel": "Fornecimento de Alimentação aos Presidiários", "dotAut": 63693000, "empenhado": 63692744.61, "liquidado": 63692744.61},
+{"ano": 2022, "ptCode": "06.422.6217.2726.0003", "ptLabel": "Modernização da Infraestrutura do Sistema Prisional", "dotAut": 777103, "empenhado": 776232.33, "liquidado": 251791.89},
+{"ano": 2022, "ptCode": "28.846.0001.9050.0104", "ptLabel": "Ressarc./Indeniz./Restituições de Pessoal", "dotAut": 46000000, "empenhado": 45999999.32, "liquidado": 45038445.32},
+{"ano": 2023, "ptCode": "06.122.8217.8502.0112", "ptLabel": "Administração de Pessoal", "dotAut": 321181156, "empenhado": 318995363.56, "liquidado": 314473637.5},
+{"ano": 2023, "ptCode": "06.122.8217.8504.0094", "ptLabel": "Concessão de Benefícios a Servidores", "dotAut": 19922475, "empenhado": 19922474.18, "liquidado": 19423091.51},
+{"ano": 2023, "ptCode": "06.126.8217.1471.0099", "ptLabel": "Modernização de Sistema de Informação", "dotAut": 176619, "empenhado": 35517.96, "liquidado": 35517.96},
+{"ano": 2023, "ptCode": "06.421.6217.2727.0006", "ptLabel": "Manutenção do Sistema Penitenciário do DF", "dotAut": 52486196, "empenhado": 52402535.76, "liquidado": 49810010.81},
+{"ano": 2023, "ptCode": "06.421.6217.2890.0003", "ptLabel": "Realização de Ações Alternativas Penais", "dotAut": 4169050, "empenhado": 4169044.65, "liquidado": 3784025.72},
+{"ano": 2023, "ptCode": "06.422.6217.2540.0002", "ptLabel": "Fornecimento de Alimentação aos Presidiários", "dotAut": 55830000, "empenhado": 55829578.25, "liquidado": 55829577.52},
+{"ano": 2023, "ptCode": "06.422.6217.2726.0003", "ptLabel": "Modernização da Infraestrutura do Sistema Prisional", "dotAut": 10884254, "empenhado": 10883435.48, "liquidado": 10537481.56},
+{"ano": 2023, "ptCode": "28.846.0001.9050.0104", "ptLabel": "Ressarc./Indeniz./Restituições de Pessoal", "dotAut": 49782670, "empenhado": 49772670, "liquidado": 45247110.08},
+{"ano": 2024, "ptCode": "06.122.8217.8502.0112", "ptLabel": "Administração de Pessoal", "dotAut": 430712704, "empenhado": 430712704, "liquidado": 426407843.47},
+{"ano": 2024, "ptCode": "06.122.8217.8504.0094", "ptLabel": "Concessão de Benefícios a Servidores", "dotAut": 23697920, "empenhado": 23696820, "liquidado": 23362599.71},
+{"ano": 2024, "ptCode": "06.122.8217.8517.0009", "ptLabel": "Manutenção de Serviços Administrativos Gerais", "dotAut": 4266595, "empenhado": 4266593.07, "liquidado": 3728353.49},
+{"ano": 2024, "ptCode": "06.126.8217.1471.0099", "ptLabel": "Modernização de Sistema de Informação", "dotAut": 180504, "empenhado": 180504, "liquidado": 180504},
+{"ano": 2024, "ptCode": "06.421.6217.2727.0006", "ptLabel": "Manutenção do Sistema Penitenciário do DF", "dotAut": 68717940, "empenhado": 68484824.04, "liquidado": 62154623.31},
+{"ano": 2024, "ptCode": "06.421.6217.2890.0003", "ptLabel": "Realização de Ações Alternativas Penais", "dotAut": 4017449, "empenhado": 4017448.66, "liquidado": 3479307.97},
+{"ano": 2024, "ptCode": "06.422.6217.2540.0002", "ptLabel": "Fornecimento de Alimentação aos Presidiários", "dotAut": 69144683, "empenhado": 69071172.32, "liquidado": 65822692.87},
+{"ano": 2024, "ptCode": "06.422.6217.2726.0003", "ptLabel": "Modernização da Infraestrutura do Sistema Prisional", "dotAut": 4324958, "empenhado": 4324957.05, "liquidado": 4324957.05},
+{"ano": 2024, "ptCode": "28.846.0001.9050.0104", "ptLabel": "Ressarc./Indeniz./Restituições de Pessoal", "dotAut": 54272010, "empenhado": 54272010, "liquidado": 49393450},
+{"ano": 2025, "ptCode": "06.122.8217.8502.0112", "ptLabel": "Administração de Pessoal", "dotAut": 492227139, "empenhado": 491921489.18, "liquidado": 489602470.19},
+{"ano": 2025, "ptCode": "06.122.8217.8504.0094", "ptLabel": "Concessão de Benefícios a Servidores", "dotAut": 25148717, "empenhado": 24884419.3, "liquidado": 24810332.84},
+{"ano": 2025, "ptCode": "06.122.8217.8517.0009", "ptLabel": "Manutenção de Serviços Administrativos Gerais", "dotAut": 3728964, "empenhado": 3671438.32, "liquidado": 3608573.36},
+{"ano": 2025, "ptCode": "06.126.8217.1471.0099", "ptLabel": "Modernização de Sistema de Informação", "dotAut": 1090412, "empenhado": 1051666.17, "liquidado": 476828.71},
+{"ano": 2025, "ptCode": "06.421.6217.2727.0006", "ptLabel": "Manutenção do Sistema Penitenciário do DF", "dotAut": 57342772, "empenhado": 57129679.62, "liquidado": 56471668.88},
+{"ano": 2025, "ptCode": "06.421.6217.2890.0003", "ptLabel": "Realização de Ações Alternativas Penais", "dotAut": 4499840, "empenhado": 4499840, "liquidado": 4081087.96},
+{"ano": 2025, "ptCode": "06.422.6217.2540.0002", "ptLabel": "Fornecimento de Alimentação aos Presidiários", "dotAut": 61304869, "empenhado": 61275302.54, "liquidado": 60030056.74},
+{"ano": 2025, "ptCode": "06.422.6217.2726.0003", "ptLabel": "Modernização da Infraestrutura do Sistema Prisional", "dotAut": 4979979, "empenhado": 4918382.98, "liquidado": 4086419.18},
+{"ano": 2025, "ptCode": "28.846.0001.9050.0104", "ptLabel": "Ressarc./Indeniz./Restituições de Pessoal", "dotAut": 55000000, "empenhado": 55000000, "liquidado": 48883650.04}
+];
+
+function fmtBRL(v,d=2){if(v==null)return'–';return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v);}
+function fmtM(v){return'R$ '+fmtBRL(v/1e6,1)+' M';}
+
+const YEARS = [...new Set(DATA.map(d=>d.ano))].sort();
+
+// KPIs (último ano vs anterior)
+(function(){
+  const lastY = YEARS[YEARS.length-1], prevY = YEARS[YEARS.length-2];
+  const sum = (y,k) => DATA.filter(d=>d.ano===y).reduce((a,d)=>a+(d[k]||0),0);
+  const emp = sum(lastY,'empenhado'), liq = sum(lastY,'liquidado'), dot = sum(lastY,'dotAut');
+  const empPrev = sum(prevY,'empenhado');
+  const varPct = ((emp-empPrev)/empPrev*100);
+  const pct = liq/emp*100;
+
+  document.getElementById('kpiEmp2025').textContent = fmtM(emp);
+  document.getElementById('kpiEmpSub').textContent = 'vs. '+fmtM(empPrev)+' em '+prevY;
+  const badge = document.getElementById('kpiEmpVar');
+  badge.textContent = (varPct>=0?'▲ +':'▼ ')+fmtBRL(varPct,2)+'%';
+  badge.className = 'kpi-badge '+(varPct>=0?'badge-up':'badge-down');
+
+  document.getElementById('kpiLiq2025').textContent = fmtM(liq);
+  document.getElementById('kpiLiqSub').textContent = fmtBRL(pct,2)+'% do empenhado';
+
+  document.getElementById('kpiPct2025').textContent = fmtBRL(pct,2)+'%';
+  document.getElementById('kpiPctSub').textContent = 'Liquidado / Empenhado em '+lastY;
+
+  document.getElementById('kpiDot2025').textContent = fmtM(dot);
+
+  document.querySelector('.header-badge .acao').textContent = YEARS[0]+' – '+lastY;
+})();
+
+// Lista de PTs (ordem estável, pelo maior empenhado no último ano)
+const PTS = [...new Map(DATA.map(d=>[d.ptCode,{ptCode:d.ptCode,ptLabel:d.ptLabel}])).values()]
+  .sort((a,b)=>{
+    const lastY = YEARS[YEARS.length-1];
+    const va = DATA.find(d=>d.ptCode===a.ptCode&&d.ano===lastY)?.empenhado||0;
+    const vb = DATA.find(d=>d.ptCode===b.ptCode&&d.ano===lastY)?.empenhado||0;
+    return vb-va;
+  });
+
+function findRow(pt,y){ return DATA.find(d=>d.ptCode===pt&&d.ano===y); }
+
+// Tabela — anos em coluna, um PT por linha
+(function(){
+  const th1 = document.getElementById('tableHeadYears');
+  const th2 = document.getElementById('tableHeadMetrics');
+  th1.innerHTML = '<th rowspan="2">Programa de Trabalho</th>' +
+    YEARS.map(y=>`<th class="year-head grp-start" colspan="2">${y}</th>`).join('');
+  th2.innerHTML = YEARS.map(y=>`<th class="grp-start">Empenhado</th><th>Liquidado</th>`).join('');
+
+  const tb = document.getElementById('tableBody');
+  PTS.forEach(pt=>{
+    const tr = document.createElement('tr');
+    let h = `<td>${pt.ptCode} – ${pt.ptLabel}</td>`;
+    YEARS.forEach(y=>{
+      const r = findRow(pt.ptCode,y);
+      h += `<td class="cell-emp grp-start">${r?fmtBRL(r.empenhado,0):'–'}</td>`;
+      h += `<td class="cell-liq">${r?fmtBRL(r.liquidado,0):'–'}</td>`;
+    });
+    tr.innerHTML = h;
+    tb.appendChild(tr);
+  });
+
+  // Linha de total SEAPE
+  const trTotal = document.createElement('tr');
+  trTotal.className = 'row-total';
+  let ht = `<td>TOTAL SEAPE</td>`;
+  YEARS.forEach(y=>{
+    const rows = DATA.filter(d=>d.ano===y);
+    const emp = rows.reduce((a,d)=>a+(d.empenhado||0),0);
+    const liq = rows.reduce((a,d)=>a+(d.liquidado||0),0);
+    ht += `<td class="grp-start">${fmtBRL(emp,0)}</td><td>${fmtBRL(liq,0)}</td>`;
+  });
+  trTotal.innerHTML = ht;
+  tb.appendChild(trTotal);
+})();
+
+// Gráfico 1 - Evolução anual (total SEAPE)
+(function(){
+  const totals = YEARS.map(y=>{
+    const rows = DATA.filter(d=>d.ano===y);
+    return {
+      ano: y,
+      empenhado: rows.reduce((a,d)=>a+(d.empenhado||0),0),
+      liquidado: rows.reduce((a,d)=>a+(d.liquidado||0),0)
+    };
+  });
+  new Chart(document.getElementById('barYearChart'), {
+    type: 'bar',
+    data: {
+      labels: totals.map(t=>t.ano),
+      datasets: [
+        { label: 'Empenhado', data: totals.map(t=>t.empenhado), backgroundColor: 'rgba(21,101,192,.75)', borderColor: '#1565c0', borderWidth: 1.5, borderRadius: 5 },
+        { label: 'Liquidado', data: totals.map(t=>t.liquidado), backgroundColor: 'rgba(46,125,50,.75)', borderColor: '#2e7d32', borderWidth: 1.5, borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 14 } },
+        tooltip: { callbacks: { label: ctx => ' '+ctx.dataset.label+': '+fmtM(ctx.raw) } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => 'R$ '+fmtBRL(v/1e6,0)+' M', font: { size: 10 } } }
+      }
+    }
+  });
+})();
+
+// Gráfico 2 - Comparação dos PTs por ano (cada PT = grupo de barras, uma por ano)
+const CL = ['#1565c0','#e65100','#6a1b9a','#00695c','#f57f17','#c62828'];
+const CB = ['rgba(21,101,192,.75)','rgba(230,81,0,.75)','rgba(106,27,154,.75)','rgba(0,105,92,.75)','rgba(245,127,23,.75)','rgba(198,40,40,.75)'];
+
+let ptChart = null;
+let currentMetric = 'empenhado';
+
+function buildPtChart(){
+  const labels = PTS.map(p=>p.ptCode);
+  const datasets = YEARS.map((y,i)=>({
+    label: String(y),
+    data: PTS.map(p=>{ const r=findRow(p.ptCode,y); return r?r[currentMetric]:null; }),
+    backgroundColor: CB[i%CB.length],
+    borderColor: CL[i%CL.length],
+    borderWidth: 1.5,
+    borderRadius: 3
+  }));
+  if(ptChart) ptChart.destroy();
+  ptChart = new Chart(document.getElementById('barPtChart'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 14 } },
+        tooltip: {
+          callbacks: {
+            title: ctx => { const p = PTS[ctx[0].dataIndex]; return p.ptCode+' – '+p.ptLabel; },
+            label: ctx => ' '+ctx.dataset.label+': '+(ctx.raw!=null?fmtM(ctx.raw):'–')
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#f0f0f0' }, ticks: { callback: v => 'R$ '+fmtBRL(v/1e6,0)+' M', font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10.5 } } }
+      }
+    }
+  });
+}
+
+(function(){
+  const c = document.getElementById('metricFilter');
+  const metrics = [{key:'empenhado',label:'Empenhado'},{key:'liquidado',label:'Liquidado'}];
+  metrics.forEach(m=>{
+    const b = document.createElement('button');
+    b.className = 'year-btn'+(m.key===currentMetric?' active':'');
+    b.textContent = m.label;
+    b.onclick = () => {
+      currentMetric = m.key;
+      c.querySelectorAll('.year-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      buildPtChart();
+    };
+    c.appendChild(b);
+  });
+  buildPtChart();
+})();
+</script>
+</body>
+</html>

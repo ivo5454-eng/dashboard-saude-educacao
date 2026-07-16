@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Folha de Pessoal GDF 2026 – Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #00347A;
+      --primary-light: #0055BB;
+      --accent: #F5A623;
+      --success: #00A650;
+      --danger: #E8001C;
+      --saude: #2980b9;
+      --edu: #27ae60;
+      --demais: #8e44ad;
+      --fcdf: #e67e22;
+      --tesouro: #16a085;
+      --inativo: #c0392b;
+      --ativo: #2ecc71;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --text-muted: #6c757d;
+      --border: #e0e0e0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #00347A 0%, #0055BB 60%, #0077CC 100%);
+      color: #fff;
+      padding: 20px 32px 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    .header-logo {
+      width: 52px; height: 52px;
+      background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 900; color: #fff;
+      border: 2px solid rgba(255,255,255,.3);
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-size: 1.35rem; font-weight: 700; letter-spacing: .02em;
+    }
+    .header-text p {
+      font-size: .8rem; opacity: .8; margin-top: 2px;
+    }
+    .header-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: .78rem;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .header-badge strong { font-size: .92rem; display: block; }
+
+    /* ── LAYOUT ── */
+    .content { padding: 24px 28px; }
+
+    .section-title {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding-left: 2px;
+    }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px 16px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      border-top: 4px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card.blue  { border-top-color: var(--primary-light); }
+    .kpi-card.green { border-top-color: var(--success); }
+    .kpi-card.teal  { border-top-color: #17a2b8; }
+    .kpi-card.saude { border-top-color: var(--saude); }
+    .kpi-card.edu   { border-top-color: var(--edu); }
+
+    .kpi-label {
+      font-size: .72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+    }
+    .kpi-value span { font-size: .9rem; font-weight: 400; color: var(--text-muted); }
+    .kpi-delta {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: .72rem;
+      font-weight: 600;
+      margin-top: 6px;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .kpi-delta.up   { background: #d4edda; color: #155724; }
+    .kpi-delta.down { background: #f8d7da; color: #721c24; }
+    .kpi-delta.warn { background: #fff3cd; color: #856404; }
+    .kpi-sub { font-size: .7rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* ── CHARTS GRID ── */
+    .charts-row {
+      display: grid;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .charts-row.two-col { grid-template-columns: 2fr 1fr; }
+    .charts-row.three-col { grid-template-columns: 1.3fr 1fr 1fr; }
+    .charts-row.equal { grid-template-columns: 1fr 1fr; }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    .card-title {
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .card-subtitle {
+      font-size: .7rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .chart-container {
+      position: relative;
+    }
+
+    /* ── TABLE ── */
+    .table-wrapper { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+    }
+    thead th {
+      background: #f8f9fa;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: .67rem;
+      letter-spacing: .05em;
+      border-bottom: 2px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid #f0f0f0; }
+    tbody tr:hover { background: #fafbfc; }
+    tbody td { padding: 8px 12px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: .68rem;
+      font-weight: 700;
+    }
+    .badge-deficit  { background: #ffe4e6; color: #9b1c1c; }
+    .badge-surplus  { background: #dcfce7; color: #15803d; }
+    .badge-warn     { background: #fef9c3; color: #854d0e; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap { display: flex; align-items: center; gap: 8px; }
+    .progress-bar-bg {
+      flex: 1; height: 6px; background: #e9ecef; border-radius: 4px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 4px; transition: width .3s;
+    }
+    .progress-label { font-size: .7rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 12px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: .7rem; color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      font-size: .68rem;
+      color: var(--text-muted);
+      padding: 16px 32px 20px;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .charts-row.three-col { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 750px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .charts-row.two-col, .charts-row.equal { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="header">
+  <div class="header-logo">DF</div>
+  <div class="header-text">
+    <h1>Folha de Pessoal GDF 2026 – Panorama Macro</h1>
+    <p>SUOP · Subsecretaria de Orçamento Público &nbsp;·&nbsp; CODEP · Coordenação de Gestão de Despesas com Pessoal &nbsp;|&nbsp; Fonte: SIGGO e Tesouro Gerencial</p>
+  </div>
+  <div class="header-badge">
+    <strong>Maio / 2026</strong>
+    Último mês executado
+  </div>
+</header>
+
+<div class="content">
+
+  <!-- ══ KPI CARDS ══ -->
+  <p class="section-title">Indicadores-chave de execução</p>
+  <div class="kpi-grid">
+
+    <div class="kpi-card blue">
+      <div class="kpi-label">Executivo Jan–Mai</div>
+      <div class="kpi-value">R$ 13,37 <span>B</span></div>
+      <div class="kpi-sub">Total acumulado 5 meses</div>
+      <span class="kpi-delta warn">▶ 2,67B / mês</span>
+    </div>
+
+    <div class="kpi-card teal">
+      <div class="kpi-label">Inativos Jan–Mai</div>
+      <div class="kpi-value">R$ 5,04 <span>B</span></div>
+      <div class="kpi-sub">Aposentados + pensionistas</div>
+      <span class="kpi-delta up">↑ +4,1% vs 2025</span>
+    </div>
+
+    <div class="kpi-card green">
+      <div class="kpi-label">Saúde Jan–Mai</div>
+      <div class="kpi-value">R$ 4,28 <span>B</span></div>
+      <div class="kpi-sub">SES — Ativo + Inativo</div>
+      <span class="kpi-delta up">↑ +5,8% vs 2025</span>
+    </div>
+
+    <div class="kpi-card edu">
+      <div class="kpi-label">Educação Jan–Mai</div>
+      <div class="kpi-value">R$ 5,25 <span>B</span></div>
+      <div class="kpi-sub">SEE — Ativo + Inativo</div>
+      <span class="kpi-delta up">↑ +6,5% vs 2025</span>
+    </div>
+
+    <div class="kpi-card saude">
+      <div class="kpi-label">Ativos DF – Déficit/Sup</div>
+      <div class="kpi-value">+ R$ 42 <span>M</span></div>
+      <div class="kpi-sub">Proj. 7,13B vs Dot. 7,17B</div>
+      <span class="kpi-delta up">↑ Superávit global</span>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 1: Linha mensal + Donut ══ -->
+  <p class="section-title">Execução mensal 2026 · Ativos + Inativos por área</p>
+  <div class="charts-row two-col">
+
+    <div class="card">
+      <div class="card-title">Execução Mensal — Total Executivo (Jan–Mai 2026)</div>
+      <div class="card-subtitle">Valores em R$ milhões · Saúde · Educação · Demais Unidades</div>
+      <div class="chart-container" style="height:260px">
+        <canvas id="chartMensal"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--saude)"></div> Saúde</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--edu)"></div> Educação</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--demais)"></div> Demais Unidades</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Distribuição por Área — Jan–Mai 2026</div>
+      <div class="card-subtitle">Percentual do total acumulado (R$ 13,37B)</div>
+      <div class="chart-container" style="height:220px">
+        <canvas id="chartDonut"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 2: Histórico + FCDF vs Tesouro ══ -->
+  <p class="section-title">Série histórica e fontes de recursos</p>
+  <div class="charts-row equal">
+
+    <div class="card">
+      <div class="card-title">Evolução Anual — Inativos GDF (2023–2026)</div>
+      <div class="card-subtitle">Total GDF + FCDF · valores em R$ bilhões</div>
+      <div class="chart-container" style="height:250px">
+        <canvas id="chartHistorico"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--primary-light)"></div> GDF (Tesouro)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--fcdf)"></div> FCDF (Saúde e Educação)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inativos Mensais — SES e SEE (Jan–Mai 2026)</div>
+      <div class="card-subtitle">Aposentados e pensionistas por fonte · R$ milhões</div>
+      <div class="chart-container" style="height:250px">
+        <canvas id="chartInativos"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--saude)"></div> Saúde FCDF</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#85c1e9"></div> Saúde Tesouro</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--edu)"></div> Educação FCDF</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#82e0aa"></div> Educação Tesouro</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#bdc3c7"></div> Demais Inat.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 3: SES/SEE Histórico + Ativo vs Inativo ══ -->
+  <p class="section-title">Saúde e Educação — séries e composição</p>
+  <div class="charts-row equal">
+
+    <div class="card">
+      <div class="card-title">Saúde e Educação — Total Anual (2024–2026)</div>
+      <div class="card-subtitle">Ativo + Inativo · FCDF + Tesouro · R$ bilhões</div>
+      <div class="chart-container" style="height:250px">
+        <canvas id="chartSESSEE"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Composição Ativo vs Inativo — Jan–Mai 2026</div>
+      <div class="card-subtitle">SES (Saúde) e SEE (Educação) · R$ milhões/mês (médias)</div>
+      <div class="chart-container" style="height:250px">
+        <canvas id="chartAtivoInativo"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ ROW 4: Inativos por categoria + Tabela ══ -->
+  <p class="section-title">Inativos por órgão · projeção vs dotação 2026</p>
+  <div class="charts-row two-col">
+
+    <div class="card">
+      <div class="card-title">Top Variações — Ativos DF (Projetado vs Dotação)</div>
+      <div class="card-subtitle">Unidades com maior déficit e superávit em R$ milhões</div>
+      <div class="chart-container" style="height:300px">
+        <canvas id="chartVariacoes"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Inativos por Instituição — Crescimento 2025 vs 2024</div>
+      <div class="card-subtitle">Variação percentual acumulada anual</div>
+      <div class="chart-container" style="height:300px">
+        <canvas id="chartCrescimento"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ TABELA ══ -->
+  <p class="section-title">Detalhamento — ativos DF: projetado vs dotação</p>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">Unidades com maior impacto orçamentário</div>
+    <div class="card-subtitle">Servidor ativo — pessoal e encargos 2026 · maiores déficits e superávits selecionados</div>
+    <div class="table-wrapper" style="margin-top:12px">
+      <table>
+        <thead>
+          <tr>
+            <th>Unidade Orçamentária</th>
+            <th>Projetado (R$)</th>
+            <th>Dotação (R$)</th>
+            <th>Variação</th>
+            <th>Execução</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ INATIVOS DOTAÇÃO vs PROJEÇÃO ══ -->
+  <p class="section-title">Inativos — dotação vs projeção 2026 por categoria</p>
+  <div class="card" style="margin-bottom: 24px">
+    <div class="card-title">Execução Acumulada Jan–Mai vs Dotação Autorizada</div>
+    <div class="card-subtitle">Percentual de consumo da dotação em 5/12 do ano (referência 41,7%)</div>
+    <div id="progressBars" style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:12px"></div>
+  </div>
+
+</div><!-- /content -->
+
+<footer class="footer">
+  Secretaria de Estado de Economia do DF · Secretaria Executiva de Finanças · Subsecretaria de Orçamento Público<br>
+  Fonte: SIGGO e Tesouro Gerencial &nbsp;|&nbsp; Dados até Maio/2026 &nbsp;|&nbsp; Dashboard gerado automaticamente
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai'];
+
+// Execução mensal total executivo por área (R$ milhões)
+const execSaude   = [830.8, 845.2, 872.8, 862.0, 871.0];
+const execEdu     = [943.5, 953.9, 1152.4, 1099.7, 1096.2];
+const execDemais  = [715.8, 786.0, 793.7, 781.6, 769.8];
+const execTotal   = execSaude.map((v,i) => v + execEdu[i] + execDemais[i]);
+
+// Inativos mensais por categoria (R$ milhões)
+const inatSaudeFCDF  = [188.0, 187.3, 187.8, 190.0, 189.1];
+const inatSaudeTesor = [74.6,  74.7,  76.4,  77.9,  80.0 ];
+const inatEduFCDF    = [310.0, 310.7, 311.0, 313.0, 312.4];
+const inatEduTesor   = [157.1, 157.7, 161.6, 163.6, 166.1];
+const inatDemais     = [266.8, 268.0, 270.5, 272.6, 274.9]; // Demais GDF + CLDF + TCDF + DPDF
+
+// Histórico inativos (bilhões)
+const histGDF  = [4.39, 5.74, 6.33, 6.11]; // 2026 proj ~jan-mai annualized
+const histFCDF = [4.91, 4.73, 5.29, 5.57];
+const histYears = ['2023','2024','2025','2026 (proj.)'];
+
+// SES/SEE histórico (bilhões)
+const sesAtivo  = [6.55, 7.05, 7.51];
+const sesInativ = [2.83, 3.13, 3.26];
+const seeAtivo  = [6.34, 6.97, 7.26];
+const seeInativ = [4.75, 5.32, 5.83];
+const seseYears = ['2024','2025','2026 (Dot.)'];
+
+// Top variações ativo (R$ milhões)
+const uosVariacao = [
+  { uo: 'SEJUS', proj: 651.1, dot: 583.1, def: -68.1 },
+  { uo: 'FUNMO / CBMDF', proj: 152.0, dot: 108.6, def: -43.3 },
+  { uo: 'Desenv. Econômico', proj: 330.9, dot: 300.0, def: -30.9 },
+  { uo: 'Defensoria Pública', proj: 372.6, dot: 347.9, def: -24.7 },
+  { uo: 'Gab. Vice-Gov.', proj: 42.7, dot: 25.4, def: -17.3 },
+  { uo: 'SEEC (Economia)', proj: 1234.6, dot: 1326.9, def: +92.3 },
+  { uo: 'IPREV', proj: 44.8, dot: 83.9, def: +39.1 },
+  { uo: 'NOVACAP', proj: 339.2, dot: 373.3, def: +34.1 },
+  { uo: 'Rec. Tributária / SEFAZ', proj: 43.5, dot: 75.2, def: +31.6 },
+  { uo: 'Total Ativos DF', proj: 7125.6, dot: 7167.1, def: +41.6 },
+];
+
+// Crescimento inativos por instituição 2024→2025
+const crescInst = [
+  { inst: 'Demais GDF (Aposen.)', d2425: 11.2 },
+  { inst: 'Demais GDF (Pension.)', d2425: 7.5 },
+  { inst: 'TCDF', d2425: 10.4 },
+  { inst: 'CLDF', d2425: 6.3 },
+  { inst: 'Saúde Tesouro', d2425: -2.3 },
+  { inst: 'Saúde FCDF', d2425: 18.4 },
+  { inst: 'Educação Tesouro', d2425: 18.9 },
+  { inst: 'Educação FCDF', d2425: 7.9 },
+  { inst: 'DPDF', d2425: 11.4 },
+];
+
+// Dotação vs acumulado Jan-Mai (inativos)
+const progressData = [
+  { label: 'Demais GDF Aposentados', dot: 2236.84, exec5m: 832.1 },
+  { label: 'Demais GDF Pensionistas', dot: 800.0, exec5m: 307.5 },
+  { label: 'CLDF (Aposen.+Pension.)', dot: 201.4, exec5m: 70.1 },
+  { label: 'TCDF (Aposen.+Pension.)', dot: 323.9, exec5m: 119.2 },
+  { label: 'Saúde Tesouro', dot: 864.1, exec5m: 383.6 },
+  { label: 'Saúde FCDF', dot: 1880.0, exec5m: 942.2 },
+  { label: 'Educação Tesouro', dot: 1829.5, exec5m: 806.1 },
+  { label: 'Educação FCDF', dot: 3120.0, exec5m: 1557.2 },
+  { label: 'DPDF', dot: 59.2, exec5m: 23.1 },
+];
+
+// Table data (top deficit + top surplus)
+const tableData = [
+  { uo: '44101 – Sec. de Justiça e Cidadania', proj: 651.1, dot: 583.1, def: -68.1 },
+  { uo: '63901 – Fundo de Modernização / CBMDF', proj: 152.0, dot: 108.6, def: -43.3 },
+  { uo: '17101 – Sec. de Desenv. Econômico', proj: 330.9, dot: 300.0, def: -30.9 },
+  { uo: '48101 – Defensoria Pública', proj: 372.6, dot: 347.9, def: -24.7 },
+  { uo: '10101 – Gab. Vice-Governador', proj: 42.7, dot: 25.4, def: -17.3 },
+  { uo: '09136 – Adm. Reg. Sol Nascente/Pôr do Sol', proj: 5.2, dot: 2.1, def: -3.2 },
+  { uo: '09138 – Adm. Reg. Arapoanga', proj: 4.0, dot: 1.3, def: -2.7 },
+  { uo: '19101 – Sec. de Estado de Economia', proj: 1234.6, dot: 1326.9, def: +92.3 },
+  { uo: '19213 – IPREV', proj: 44.8, dot: 83.9, def: +39.1 },
+  { uo: '22201 – NOVACAP', proj: 339.2, dot: 373.3, def: +34.1 },
+  { uo: '19911 – Fundo da Receita Tributária', proj: 43.5, dot: 75.2, def: +31.6 },
+  { uo: 'TOTAL Ativos DF', proj: 7125.6, dot: 7167.1, def: +41.6 },
+];
+
+// ─────────────────────────────────────────────
+// CHART DEFAULTS
+// ─────────────────────────────────────────────
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#6c757d';
+Chart.defaults.plugins.legend.display = false;
+
+const gridColor = 'rgba(0,0,0,.06)';
+
+// ─────────────────────────────────────────────
+// 1. MENSAL STACKED BAR
+// ─────────────────────────────────────────────
+new Chart(document.getElementById('chartMensal'), {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      { label: 'Saúde', data: execSaude, backgroundColor: '#2980b9', borderRadius: 4 },
+      { label: 'Educação', data: execEdu, backgroundColor: '#27ae60', borderRadius: 4 },
+      { label: 'Demais Unidades', data: execDemais, backgroundColor: '#8e44ad', borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toFixed(1)}M`,
+          footer: items => `Total: R$ ${items.reduce((s,i) => s+i.parsed.y, 0).toFixed(1)}M`
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, grid: { color: gridColor },
+        ticks: { callback: v => `${(v/1000).toFixed(1)}B` } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 2. DONUT
+// ─────────────────────────────────────────────
+const totSaude  = execSaude.reduce((a,b)=>a+b,0);
+const totEdu    = execEdu.reduce((a,b)=>a+b,0);
+const totDemais = execDemais.reduce((a,b)=>a+b,0);
+
+new Chart(document.getElementById('chartDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Saúde','Educação','Demais Unidades'],
+    datasets: [{
+      data: [totSaude, totEdu, totDemais],
+      backgroundColor: ['#2980b9','#27ae60','#8e44ad'],
+      borderWidth: 3, borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '62%',
+    plugins: {
+      legend: {
+        display: true, position: 'bottom',
+        labels: { padding: 14, usePointStyle: true, pointStyleWidth: 10 }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const pct = (ctx.parsed / (totSaude+totEdu+totDemais)*100).toFixed(1);
+            return ` ${ctx.label}: R$ ${ctx.parsed.toFixed(0)}M (${pct}%)`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 3. HISTÓRICO INATIVOS
+// ─────────────────────────────────────────────
+new Chart(document.getElementById('chartHistorico'), {
+  type: 'bar',
+  data: {
+    labels: histYears,
+    datasets: [
+      { label: 'GDF (Tesouro)', data: histGDF, backgroundColor: '#0055BB', borderRadius: 6 },
+      { label: 'FCDF', data: histFCDF, backgroundColor: '#e67e22', borderRadius: 6 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toFixed(2)}B`,
+          footer: items => `Total: R$ ${items.reduce((s,i)=>s+i.parsed.y,0).toFixed(2)}B`
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, grid: { color: gridColor },
+           ticks: { callback: v => `${v.toFixed(1)}B` } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 4. INATIVOS MENSAIS POR CATEGORIA (area chart)
+// ─────────────────────────────────────────────
+new Chart(document.getElementById('chartInativos'), {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      { label: 'Saúde FCDF', data: inatSaudeFCDF, borderColor:'#2980b9', backgroundColor:'rgba(41,128,185,.12)', fill:true, tension:.4, pointRadius:4 },
+      { label: 'Saúde Tesouro', data: inatSaudeTesor, borderColor:'#85c1e9', backgroundColor:'rgba(133,193,233,.12)', fill:true, tension:.4, pointRadius:4 },
+      { label: 'Educação FCDF', data: inatEduFCDF, borderColor:'#27ae60', backgroundColor:'rgba(39,174,96,.12)', fill:true, tension:.4, pointRadius:4 },
+      { label: 'Educação Tesouro', data: inatEduTesor, borderColor:'#82e0aa', backgroundColor:'rgba(130,224,170,.1)', fill:true, tension:.4, pointRadius:4 },
+      { label: 'Demais Inat.', data: inatDemais, borderColor:'#bdc3c7', backgroundColor:'rgba(189,195,199,.08)', fill:true, tension:.4, pointRadius:4, borderDash:[4,3] },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { mode: 'index', intersect: false,
+        callbacks: { label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toFixed(1)}M` }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor }, ticks: { callback: v => `${v}M` } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 5. SES/SEE GROUPED BAR
+// ─────────────────────────────────────────────
+new Chart(document.getElementById('chartSESSEE'), {
+  type: 'bar',
+  data: {
+    labels: seseYears,
+    datasets: [
+      { label: 'Saúde Ativos',   data: sesAtivo,  backgroundColor: '#2471a3', borderRadius: 5 },
+      { label: 'Saúde Inativos', data: sesInativ, backgroundColor: '#85c1e9', borderRadius: 5 },
+      { label: 'Educação Ativos',   data: seeAtivo,  backgroundColor: '#1e8449', borderRadius: 5 },
+      { label: 'Educação Inativos', data: seeInativ, backgroundColor: '#82e0aa', borderRadius: 5 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom',
+        labels: { padding: 12, usePointStyle: true, pointStyleWidth: 10 } },
+      tooltip: {
+        callbacks: { label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toFixed(2)}B` }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor }, ticks: { callback: v => `${v.toFixed(0)}B` } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 6. ATIVO vs INATIVO (médias mensais Jan-Mai 2026)
+// ─────────────────────────────────────────────
+const avgSaudeAtivo  = execSaude.reduce((a,b)=>a+b,0)/5   - inatSaudeFCDF.reduce((a,b)=>a+b,0)/5 - inatSaudeTesor.reduce((a,b)=>a+b,0)/5;
+const avgSaudeInativ = (inatSaudeFCDF.reduce((a,b)=>a+b,0) + inatSaudeTesor.reduce((a,b)=>a+b,0)) / 5;
+const avgEduAtivo    = execEdu.reduce((a,b)=>a+b,0)/5 - inatEduFCDF.reduce((a,b)=>a+b,0)/5 - inatEduTesor.reduce((a,b)=>a+b,0)/5;
+const avgEduInativ   = (inatEduFCDF.reduce((a,b)=>a+b,0) + inatEduTesor.reduce((a,b)=>a+b,0)) / 5;
+
+new Chart(document.getElementById('chartAtivoInativo'), {
+  type: 'bar',
+  data: {
+    labels: ['Saúde (SES)', 'Educação (SEE)'],
+    datasets: [
+      { label: 'Ativos', data: [avgSaudeAtivo, avgEduAtivo], backgroundColor: ['#2980b9','#27ae60'], borderRadius: 6 },
+      { label: 'Inativos', data: [avgSaudeInativ, avgEduInativ], backgroundColor: ['#85c1e9','#82e0aa'], borderRadius: 6 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyleWidth: 10 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toFixed(1)}M/mês` } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: gridColor }, ticks: { callback: v => `${v.toFixed(0)}M` } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 7. VARIAÇÕES UOs (horizontal bar)
+// ─────────────────────────────────────────────
+const uosSorted = [...uosVariacao].sort((a,b) => a.def - b.def);
+new Chart(document.getElementById('chartVariacoes'), {
+  type: 'bar',
+  data: {
+    labels: uosSorted.map(u => u.uo),
+    datasets: [{
+      label: 'Déficit / Superávit (R$ M)',
+      data: uosSorted.map(u => u.def),
+      backgroundColor: uosSorted.map(u => u.def < 0 ? 'rgba(231,76,60,.8)' : 'rgba(39,174,96,.8)'),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.parsed.x > 0 ? '+' : ''}R$ ${ctx.parsed.x.toFixed(1)}M` } }
+    },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { callback: v => `${v > 0 ? '+' : ''}${v}M` } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// 8. CRESCIMENTO INATIVOS POR INSTITUIÇÃO
+// ─────────────────────────────────────────────
+new Chart(document.getElementById('chartCrescimento'), {
+  type: 'bar',
+  data: {
+    labels: crescInst.map(c => c.inst),
+    datasets: [{
+      label: 'Δ% 2025 vs 2024',
+      data: crescInst.map(c => c.d2425),
+      backgroundColor: crescInst.map(c => c.d2425 >= 0 ? 'rgba(41,128,185,.8)' : 'rgba(231,76,60,.8)'),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.parsed.x > 0 ? '+' : ''}${ctx.parsed.x.toFixed(1)}%` } }
+    },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { callback: v => `${v}%` } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
+// TABLE
+// ─────────────────────────────────────────────
+const tbody = document.getElementById('tableBody');
+tableData.forEach(row => {
+  const pct = (row.proj / row.dot * 100).toFixed(1);
+  const badgeClass = row.def < -10 ? 'badge-deficit' : row.def > 10 ? 'badge-surplus' : 'badge-warn';
+  const sign = row.def > 0 ? '+' : '';
+  const execColor = parseFloat(pct) > 100 ? '#e74c3c' : parseFloat(pct) > 90 ? '#e67e22' : '#27ae60';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:500">${row.uo}</td>
+    <td>R$ ${row.proj.toLocaleString('pt-BR',{minimumFractionDigits:1})}M</td>
+    <td>R$ ${row.dot.toLocaleString('pt-BR',{minimumFractionDigits:1})}M</td>
+    <td><span class="badge ${badgeClass}">${sign}R$ ${row.def.toFixed(1)}M</span></td>
+    <td>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill"
+               style="width:${Math.min(parseFloat(pct),120)}%;background:${execColor}"></div>
+        </div>
+        <span class="progress-label">${pct}%</span>
+      </div>
+    </td>`;
+  tbody.appendChild(tr);
+});
+
+// ─────────────────────────────────────────────
+// PROGRESS BARS
+// ─────────────────────────────────────────────
+const pbContainer = document.getElementById('progressBars');
+const REF = 41.7; // 5/12 months
+progressData.forEach(item => {
+  const pct = (item.exec5m / item.dot * 100);
+  const color = pct > REF + 3 ? '#e74c3c' : pct < REF - 3 ? '#27ae60' : '#e67e22';
+  const label = pct > REF + 2 ? 'Acima do ritmo' : pct < REF - 2 ? 'Abaixo do ritmo' : 'No ritmo';
+  const div = document.createElement('div');
+  div.style.cssText = 'background:#f8f9fa;border-radius:8px;padding:10px 14px';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <span style="font-size:.75rem;font-weight:600;color:#1a1a2e">${item.label}</span>
+      <span style="font-size:.7rem;padding:2px 8px;border-radius:10px;background:${color}22;color:${color};font-weight:700">${label}</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="flex:1;height:7px;background:#e9ecef;border-radius:4px;overflow:hidden">
+        <div style="width:${Math.min(pct,100)}%;height:100%;background:${color};border-radius:4px"></div>
+      </div>
+      <span style="font-size:.7rem;color:#6c757d;min-width:100px">
+        ${pct.toFixed(1)}% <span style="color:#aaa">/ ref. ${REF}%</span>
+      </span>
+    </div>
+    <div style="font-size:.65rem;color:#aaa;margin-top:3px">
+      Executado: R$ ${item.exec5m.toFixed(0)}M &nbsp;|&nbsp; Dotação: R$ ${item.dot.toLocaleString('pt-BR')}M
+    </div>`;
+  pbContainer.appendChild(div);
+});
+</script>
+</body>
+</html>

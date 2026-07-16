@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projeção Despesas com Pessoal 2026 – GDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d3d5c 0%, #1a6a8a 100%);
+    color: white;
+    padding: 18px 32px 14px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+  .header-logo {
+    width: 52px; height: 52px;
+    background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; color: #0d3d5c; font-size: 13px;
+    flex-shrink: 0; letter-spacing: -1px;
+  }
+  .header-text h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }
+  .header-text h2 { font-size: 13px; font-weight: 400; opacity: 0.85; margin-top: 2px; }
+  .header-text h3 { font-size: 12px; font-weight: 300; opacity: 0.7; margin-top: 1px; }
+  .header-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .container { padding: 24px 28px; max-width: 1300px; margin: 0 auto; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: white; border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    border-left: 4px solid #1a6a8a;
+    position: relative; overflow: hidden;
+  }
+  .kpi-card.ativo   { border-left-color: #1a6a8a; }
+  .kpi-card.inativo { border-left-color: #c0854a; }
+  .kpi-card.deficit { border-left-color: #c62828; }
+  .kpi-card.deficit2 { border-left-color: #e53935; }
+  .kpi-label { font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 21px; font-weight: 700; color: #0d3d5c; margin: 6px 0 4px; }
+  .kpi-value.red { color: #c62828; }
+  .kpi-value.orange { color: #c0854a; }
+  .kpi-sub { font-size: 11px; color: #888; }
+  .kpi-pct {
+    position: absolute; top: 14px; right: 14px;
+    font-size: 12px; font-weight: 700;
+    padding: 3px 8px; border-radius: 12px;
+  }
+  .kpi-pct.warn { background: #fff3e0; color: #e65100; }
+  .kpi-pct.danger { background: #fce4ec; color: #c62828; }
+  .kpi-pct.ok { background: #e8f5e9; color: #2e7d32; }
+
+  /* CHARTS ROW */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .chart-card {
+    background: white; border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .chart-card h4 {
+    font-size: 13px; font-weight: 700; color: #0d3d5c;
+    margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 2px solid #e8f4f8; padding-bottom: 8px;
+  }
+  .chart-wrapper { position: relative; height: 230px; }
+
+  /* TABLE */
+  .table-card {
+    background: white; border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  .table-card h4 {
+    font-size: 13px; font-weight: 700; color: #0d3d5c;
+    margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 2px solid #e8f4f8; padding-bottom: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead tr { background: #0d3d5c; color: white; }
+  thead th {
+    padding: 10px 14px; text-align: right;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: #f0f7fc; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #eef2f5; text-align: right; }
+  tbody td:first-child { text-align: left; }
+
+  tr.row-group td {
+    background: #f0f7fc; font-weight: 700; color: #0d3d5c;
+    border-top: 2px solid #c8dfe8; border-bottom: 1px solid #c8dfe8;
+  }
+  tr.row-sub td { color: #444; font-size: 12px; }
+  tr.row-sub td:first-child {
+    padding-left: 24px; color: #555;
+    font-style: italic; font-weight: 400;
+  }
+
+  /* DEFICIT SUMMARY */
+  .deficit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .deficit-card {
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .deficit-card.main { background: #fce4ec; border-left: 5px solid #c62828; }
+  .deficit-card.excesso { background: #e8f5e9; border-left: 5px solid #2e7d32; }
+  .deficit-card.final { background: #fff3e0; border-left: 5px solid #e65100; }
+  .deficit-icon { font-size: 28px; }
+  .deficit-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; }
+  .deficit-value { font-size: 20px; font-weight: 800; margin-top: 4px; }
+  .deficit-card.main .deficit-value   { color: #c62828; }
+  .deficit-card.excesso .deficit-value { color: #2e7d32; }
+  .deficit-card.final .deficit-value  { color: #e65100; }
+
+  .delta-pos { color: #2e7d32; font-weight: 700; }
+  .delta-neg { color: #c62828; font-weight: 700; }
+  .sup-tag { color: #1565c0; font-weight: 700; }
+  .def-tag { color: #c62828; font-weight: 700; }
+
+  .tag-df   { display: inline-block; background: #e3f2fd; color: #1565c0; font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: 600; }
+  .tag-fcdf { display: inline-block; background: #ede7f6; color: #4527a0; font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-left: 4px; font-weight: 600; }
+
+  .footer { text-align: center; color: #aaa; font-size: 11px; margin-top: 4px; padding-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">GDF</div>
+  <div class="header-text">
+    <h1>SECRETARIA DE ESTADO DE ECONOMIA DO DISTRITO FEDERAL</h1>
+    <h2>Secretaria Executiva de Finanças, Orçamento e Planejamento – SEFIN</h2>
+    <h3>Subsecretaria de Orçamento Público – SUOP | Coordenação de Gestão de Despesas com Pessoal – CODEP</h3>
+  </div>
+  <div class="header-badge">Projeção 2026 – Jan/Mai Realizado</div>
+</div>
+
+<div class="container">
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card ativo">
+      <div class="kpi-label">Dotação Total 2026</div>
+      <div class="kpi-value">R$ 45,83 Bi</div>
+      <div class="kpi-sub">Ativo: R$ 28,9 Bi | Inativo: R$ 16,9 Bi</div>
+    </div>
+    <div class="kpi-card inativo">
+      <div class="kpi-label">Execução Jan–Mai 2026</div>
+      <div class="kpi-value orange">R$ 42,58 Bi</div>
+      <div class="kpi-sub">Ativo: R$ 25,8 Bi | Inativo: R$ 16,8 Bi</div>
+      <div class="kpi-pct ok">Média Δ% 9,95</div>
+    </div>
+    <div class="kpi-card deficit">
+      <div class="kpi-label">Projeção Anual 2026</div>
+      <div class="kpi-value red">R$ 48,16 Bi</div>
+      <div class="kpi-sub">Ativo: R$ 29,5 Bi | Inativo: R$ 18,7 Bi</div>
+      <div class="kpi-pct danger">DÉFICIT</div>
+    </div>
+    <div class="kpi-card deficit2">
+      <div class="kpi-label">Déficit Estimado</div>
+      <div class="kpi-value red">R$ 1,76 Bi</div>
+      <div class="kpi-sub">Ativo: R$ 29,5 Bi | Inativo: R$ 18,7 Bi</div>
+      <div class="kpi-pct danger">DÉFICIT</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h4>Dotação vs Projeção Anual 2026 (R$ Bilhões)</h4>
+      <div class="chart-wrapper">
+        <canvas id="chartBarras"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h4>Composição da Projeção 2026</h4>
+      <div class="chart-wrapper">
+        <canvas id="chartDoughnut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEFICIT SUMMARY -->
+  <div style="margin-bottom: 20px;">
+    <div class="deficit-card final" style="max-width: 420px;">
+      <div class="deficit-icon">📋</div>
+      <div>
+        <div class="deficit-label">Déficit Estimado</div>
+        <div class="deficit-value">– R$ 1.763.291.571</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <h4>Demonstrativo por Categoria – Exercício 2026</h4>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32%; text-align:left;">Categoria</th>
+          <th>Dotação</th>
+          <th>Execução 2026</th>
+          <th>Média Δ%</th>
+          <th>Projeção Anual</th>
+          <th>Superávit / Déficit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- ATIVOS -->
+        <tr class="row-group">
+          <td>Ativos Total</td>
+          <td>28.910.623.945</td>
+          <td>25.787.644.129</td>
+          <td><span class="delta-pos">9,06%</span></td>
+          <td>29.473.352.364</td>
+          <td><span class="def-tag">– 562.728.419</span></td>
+        </tr>
+        <tr class="row-sub">
+          <td>Ativos custeados c/ recursos do DF <span class="tag-df">DF</span></td>
+          <td>17.451.299.449</td>
+          <td>15.939.858.255</td>
+          <td><span class="delta-pos">7,64%</span></td>
+          <td>17.156.959.134</td>
+          <td><span class="sup-tag">+ 294.340.315</span></td>
+        </tr>
+        <tr class="row-sub">
+          <td>Ativos custeados c/ Fundo Constitucional <span class="tag-fcdf">FCDF</span></td>
+          <td>11.459.324.496</td>
+          <td>9.847.785.874</td>
+          <td><span class="delta-pos">10,48%</span></td>
+          <td>12.316.393.230</td>
+          <td><span class="def-tag">– 857.068.734</span></td>
+        </tr>
+
+        <!-- INATIVOS -->
+        <tr class="row-group">
+          <td>Inativos Total</td>
+          <td>16.924.033.566</td>
+          <td>16.789.403.294</td>
+          <td><span class="delta-pos">11,10%</span></td>
+          <td>18.688.509.320</td>
+          <td><span class="def-tag">– 1.764.475.754</span></td>
+        </tr>
+        <tr class="row-sub">
+          <td>Inativos custeados c/ recursos do DF <span class="tag-df">DF</span></td>
+          <td>5.368.649.659</td>
+          <td>6.381.900.944</td>
+          <td><span class="delta-pos">10,23%</span></td>
+          <td>7.034.638.741</td>
+          <td><span class="def-tag">– 1.665.989.082</span></td>
+        </tr>
+        <tr class="row-sub">
+          <td>Inativos custeados c/ Fundo Constitucional <span class="tag-fcdf">FCDF</span></td>
+          <td>11.555.383.907</td>
+          <td>10.407.502.350</td>
+          <td><span class="delta-pos">11,98%</span></td>
+          <td>11.653.870.579</td>
+          <td><span class="def-tag">– 98.486.672</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">Fonte: SEEC/SEFIN/SUOP – CODEP &nbsp;|&nbsp; Execução: Janeiro a Maio/2026 &nbsp;|&nbsp; Atualizado: junho/2026</div>
+</div>
+
+<script>
+// CHART 1 – Dotação vs Projeção
+const ctx1 = document.getElementById('chartBarras').getContext('2d');
+new Chart(ctx1, {
+  type: 'bar',
+  data: {
+    labels: ['Ativo – DF', 'Ativo – FCDF', 'Inativo – DF', 'Inativo – FCDF'],
+    datasets: [
+      {
+        label: 'Dotação',
+        data: [17.451, 11.459, 5.369, 11.555],
+        backgroundColor: 'rgba(26,106,138,0.7)',
+        borderColor: '#1a6a8a',
+        borderWidth: 1.5,
+        borderRadius: 4,
+      },
+      {
+        label: 'Projeção Anual',
+        data: [17.157, 12.316, 7.035, 11.654],
+        backgroundColor: ctx => {
+          const vals = [17.157, 12.316, 7.035, 11.654];
+          const dots = [17.451, 11.459, 5.369, 11.555];
+          return vals[ctx.dataIndex] > dots[ctx.dataIndex]
+            ? 'rgba(198,40,40,0.75)' : 'rgba(46,125,50,0.75)';
+        },
+        borderColor: ctx => {
+          const vals = [17.157, 12.316, 7.035, 11.654];
+          const dots = [17.451, 11.459, 5.369, 11.555];
+          return vals[ctx.dataIndex] > dots[ctx.dataIndex] ? '#c62828' : '#2e7d32';
+        },
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: R$ ${ctx.raw.toFixed(2)} Bi`
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: {
+        ticks: { font: { size: 11 }, callback: v => `R$ ${v}Bi` },
+        grid: { color: '#eef2f5' }
+      }
+    }
+  }
+});
+
+// CHART 2 – Doughnut composição projeção
+const ctx2 = document.getElementById('chartDoughnut').getContext('2d');
+new Chart(ctx2, {
+  type: 'doughnut',
+  data: {
+    labels: ['Ativo – DF', 'Ativo – FCDF', 'Inativo – DF', 'Inativo – FCDF'],
+    datasets: [{
+      data: [17.157, 12.316, 7.035, 11.654],
+      backgroundColor: ['#1a6a8a','#2fa0cc','#c0854a','#e0a870'],
+      borderWidth: 2, borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: R$ ${ctx.raw.toFixed(2)} Bi`
+        }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
+                                   
