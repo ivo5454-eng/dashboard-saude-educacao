@@ -24,6 +24,10 @@
     font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;}
   .tab-btn:hover{border-color:var(--blue);color:var(--blue);}
   .tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .tab-btn.discreet{margin-left:auto;padding:9px 16px;font-weight:700;font-size:18px;line-height:1;color:var(--muted);border-color:var(--border);letter-spacing:2px;}
+  .tab-btn.discreet:hover{color:var(--blue);border-color:var(--blue);}
+  .tab-btn.discreet.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  @media print{.tab-btn.discreet{display:none!important;}}
 
   .panel{display:none;}
   .panel.active{display:block;}
@@ -99,13 +103,16 @@
     <button class="tab-btn" data-tab="Educação">Educação</button>
     <button class="tab-btn" data-tab="Saúde">Saúde</button>
     <button class="tab-btn" data-tab="Demais GDF">Demais GDF</button>
-    <button class="tab-btn" data-tab="excessos">Visão Geral c/ Excessos</button>
+    <button class="tab-btn discreet" data-tab="excessos" title="Cenário interno — uso restrito">⋯</button>
   </div>
 
   <!-- ===================== VISÃO GERAL ===================== -->
   <div class="panel active" id="panel-geral">
 
     <div class="kpi-grid" id="kpi-geral"></div>
+
+    <div class="section-title"><span class="dot ativo"></span>Resumo por setor — método Último Mês</div>
+    <table id="tblGeral"></table>
 
     <div class="chart-grid">
       <div class="chart-card">
@@ -117,9 +124,6 @@
         <canvas id="chartFonte"></canvas>
       </div>
     </div>
-
-    <div class="section-title"><span class="dot ativo"></span>Resumo por setor — método Último Mês</div>
-    <table id="tblGeral"></table>
 
     <div class="section-title"><span class="dot inativo"></span>FCDF sempre no teto — complemento assumido pelo Tesouro do GDF</div>
     <div class="chart-grid">
@@ -169,8 +173,8 @@ const DADOS = {
   "MES_ATUALIZACAO": "Julho",
   "MES_REF_NOME": "Junho/2026",
   "MES_NUM": 6,
-  "ATUALIZADO_EM": "16/07/2026",
-  "BASE_ARQUIVO": "Pessoal julho v.19.xlsx",
+  "ATUALIZADO_EM": "22/07/2026",
+  "BASE_ARQUIVO": "Pessoal julho v.22.xlsx",
   "OBS_BASE": "metodologia Último Mês — totais excluem Segurança Pública",
   "RAW": {
     "Educação": {
@@ -178,8 +182,8 @@ const DADOS = {
         {
           "nome": "GDF Ativo (Tesouro)",
           "dotacao": 5993897474.0,
-          "realizado": 2283979808.94,
-          "projBruta": 5946925425.77
+          "realizado": 2284036658.81,
+          "projBruta": 5946982275.64
         },
         {
           "nome": "FCDF Ativo",
@@ -210,8 +214,8 @@ const DADOS = {
         {
           "nome": "GDF Ativo (Tesouro)",
           "dotacao": 3209360268.0,
-          "realizado": 1026592986.44,
-          "projBruta": 2631688682.19
+          "realizado": 1026653226.48,
+          "projBruta": 2631748922.23
         },
         {
           "nome": "FCDF Ativo",
@@ -242,8 +246,8 @@ const DADOS = {
         {
           "nome": "GDF Ativo — Demais (Tesouro)",
           "dotacao": 6760974225.0,
-          "realizado": 3242941524.79,
-          "projBruta": 6974273004.96
+          "realizado": 3278973792.97,
+          "projBruta": 7010305273.14
         }
       ],
       "inativo": [
@@ -264,19 +268,21 @@ const DADOS = {
   },
   "EXCESSOS": {
     "Educação": {
-      "ativo": 0.0,
-      "inativo": 158527000.0
+      "ativo": 0,
+      "inativo": 158527000
     },
     "Saúde": {
-      "ativo": 0.0,
-      "inativo": 350000000.0
+      "ativo": 0,
+      "inativo": 350000000
     },
     "Demais GDF": {
-      "ativo": 0.0,
-      "inativo": 0.0
+      "ativo": 0,
+      "inativo": 0
     }
   },
-  "SEM_COMPENSACAO": ["Demais GDF"]
+  "SEM_COMPENSACAO": [
+    "Demais GDF"
+  ]
 };
 // ==== DADOS:FIM ====
 // ══════════════════════════════════════════════════════════════
@@ -485,12 +491,12 @@ function renderSetor(nome){
   const panel = document.getElementById('panel-'+nome);
   panel.innerHTML = `
     <div class="kpi-grid">${kpiHtml}</div>
+    <div class="section-title"><span class="dot ativo"></span>Ativo, Inativo e Total — ${nome}</div>
+    ${tableHtml}
     <div class="chart-grid">
       <div class="chart-card"><h4>Dotação × Projeção Anual × Realizado — ${nome}</h4><canvas id="chartBar-${nome}"></canvas></div>
       <div class="chart-card"><h4>% de execução por segmento (meta ${fmtPct(META_PCT)})</h4><canvas id="chartPct-${nome}"></canvas></div>
     </div>
-    <div class="section-title"><span class="dot ativo"></span>Ativo, Inativo e Total — ${nome}</div>
-    ${tableHtml}
     ${compHtml}
   `;
 
