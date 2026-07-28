@@ -265,11 +265,11 @@ const MES_NUM = DADOS.MES_NUM;
 const META_PCT = MES_NUM/12*100;
 
 document.getElementById('hTitulo').textContent =
-  `Folha de Pessoal 2026 — Educação, Saúde e Demais GDF — ${DADOS.MES_ATUALIZACAO}`;
+  `Folha de Pessoal 2026 — ${SETOR_NOMES.slice(0,-1).join(', ')} e ${SETOR_NOMES.slice(-1)} — ${DADOS.MES_ATUALIZACAO}`;
 document.getElementById('hMeta').innerHTML =
   `Mês de referência: ${DADOS.MES_REF_NOME} &nbsp;•&nbsp; Base: planilha "${DADOS.BASE_ARQUIVO}" (${DADOS.OBS_BASE}) &nbsp;•&nbsp; Atualizado em ${DADOS.ATUALIZADO_EM}`;
 document.getElementById('rodape').textContent =
-  `Fonte: planilha "${DADOS.BASE_ARQUIVO}" (abas CALC/RESUMO/DETALHE), GDF/SEEC. Mês de referência: ${DADOS.MES_REF_NOME} (meta de execução proporcional: ${(META_PCT).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%). Valores em R$. Totais não incluem Segurança Pública.`;
+  `Fonte: planilha "${DADOS.BASE_ARQUIVO}" (abas CALC/RESUMO/DETALHE), GDF/SEEC. Mês de referência: ${DADOS.MES_REF_NOME} (meta de execução proporcional: ${(META_PCT).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%). Valores em R$. Totais incluem a Segurança na parcela do Tesouro (dentro de Demais GDF); a Segurança custeada pelo FCDF e o Fundo Capitalizado ficam fora — ver quadro de Memória.`;
 
 // ══════════════════════════════════════════════════════════════
 // REGRA DO TETO DO FCDF
@@ -334,6 +334,7 @@ function totalSemCompensacao(ativo, inativo){
   const t = subtotal([...ativo, ...inativo]);
   t.saldoProj = Math.min(0, sa.saldoProj) + Math.min(0, si.saldoProj);
   t.status = t.saldoProj < 0 ? 'DEFICIT' : 'OK';
+  t.nome = 'TOTAL';
   return t;
 }
 
