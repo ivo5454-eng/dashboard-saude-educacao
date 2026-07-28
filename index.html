@@ -103,6 +103,8 @@
     <button class="tab-btn" data-tab="Educação">Educação</button>
     <button class="tab-btn" data-tab="Saúde">Saúde</button>
     <button class="tab-btn" data-tab="Demais GDF">Demais GDF</button>
+    <button class="tab-btn" data-tab="Legislativo">Legislativo</button>
+    <button class="tab-btn" data-tab="Defensoria">Defensoria</button>
     <button class="tab-btn discreet" data-tab="excessos" title="Cenário interno — uso restrito">⋯</button>
   </div>
 
@@ -136,17 +138,26 @@
         <table class="comp-table" id="tblCompGeral"></table>
       </div>
     </div>
+    <div class="section-title"><span class="dot inativo"></span>Memória — itens fora de todos os totais deste painel</div>
+    <table id="tblMemoria"></table>
+
     <div class="note-box">
       <b>Nota explicativa:</b> o FCDF (Fundo Constitucional do Distrito Federal) tem dotação fixada em lei — por isso, nos gráficos abaixo,
       ele <b>nunca aparece deficitário</b>: sua execução é sempre travada no teto da própria dotação. O valor que ultrapassaria esse teto
       não desaparece — ele é <b>redirecionado para a projeção do Tesouro do GDF</b>, que é quem de fato cobre a diferença via crédito
       suplementar, já que despesa de pessoal é obrigatória e tem que ser paga independentemente da fonte. Nos gráficos, a barra em
-      <b>vermelho</b> empilhada sobre o Tesouro é justamente esse complemento absorvido do FCDF. O setor <b>Demais GDF</b> é custeado
-      exclusivamente pelo Tesouro (não possui parcela FCDF). Os totais deste painel seguem a planilha-base e <b>não incluem a
-      Segurança Pública</b> (PMDF, CBMDF e Polícia Civil), custeada preponderantemente pelo FCDF. O KPI de <b>déficit projetado</b>
-      soma apenas os déficits: a folga projetada de um setor (ou do Inativo de Demais GDF) <b>não é usada para abater</b> o déficit
-      dos demais — remanejamentos dependem de crédito próprio. Na coluna "Saldo Proj." das linhas de total é apresentado o
-      <b>déficit sem compensação</b>; dotação, realizado e projeção seguem como somas.
+      <b>vermelho</b> empilhada sobre o Tesouro é justamente esse complemento absorvido do FCDF. Os setores <b>Demais GDF</b>,
+      <b>Legislativo</b> e <b>Defensoria</b> são custeados exclusivamente pelo Tesouro (não possuem parcela FCDF).<br><br>
+      <b>Escopo (alinhado à planilha v.23):</b> a <b>Segurança Pública</b> na parcela custeada pelo Tesouro (PMDF, CBMDF e Polícia Civil)
+      está incluída dentro de <b>Demais GDF</b>, com linhas próprias visíveis. Já a folha de Segurança custeada pelo <b>FCDF</b>
+      (COUGs 170394/170395/170484) permanece <b>fora de escopo</b> — é obrigação da União, não risco fiscal do Tesouro DF. O
+      <b>Fundo Capitalizado</b> também fica fora dos totais (superávit permanentemente bloqueado). Com isso, a dotação e a projeção
+      deste painel <b>fecham exatamente</b> com a linha TOTAL GERAL do CALC da planilha.<br><br>
+      <b>Regra de compensação:</b> o KPI de <b>déficit projetado</b> soma apenas os déficits — a folga projetada de um setor, ou do
+      Inativo dentro de um setor, <b>não é usada para abater</b> o déficit dos demais, porque remanejamento depende de crédito próprio.
+      Na coluna "Saldo Proj." das linhas de total é apresentado o <b>déficit sem compensação</b>; dotação, realizado e projeção seguem
+      como somas aritméticas. A aba <b>CONCILIACAO</b> da planilha v.23 demonstra a ponte entre esse número e os demais valores de
+      déficit em circulação.
     </div>
   </div>
 
@@ -154,6 +165,8 @@
   <div class="panel" id="panel-Educação"></div>
   <div class="panel" id="panel-Saúde"></div>
   <div class="panel" id="panel-Demais GDF"></div>
+  <div class="panel" id="panel-Legislativo"></div>
+  <div class="panel" id="panel-Defensoria"></div>
 
   <!-- ===================== VISÃO GERAL C/ EXCESSOS (preenchido via JS) ===================== -->
   <div class="panel" id="panel-excessos"></div>
@@ -173,116 +186,75 @@ const DADOS = {
   "MES_ATUALIZACAO": "Julho",
   "MES_REF_NOME": "Junho/2026",
   "MES_NUM": 6,
-  "ATUALIZADO_EM": "22/07/2026",
-  "BASE_ARQUIVO": "Pessoal julho v.22.xlsx",
-  "OBS_BASE": "metodologia Último Mês — totais excluem Segurança Pública",
+  "ATUALIZADO_EM": "28/07/2026",
+  "BASE_ARQUIVO": "Pessoal julho v.23.xlsx",
+  "OBS_BASE": "metodologia \u00daltimo M\u00eas \u00b7 Seguran\u00e7a Tesouro dentro de Demais GDF \u00b7 Fundo Capitalizado fora dos totais",
   "RAW": {
-    "Educação": {
+    "Educa\u00e7\u00e3o": {
       "ativo": [
-        {
-          "nome": "GDF Ativo (Tesouro)",
-          "dotacao": 5993897474.0,
-          "realizado": 2284036658.81,
-          "projBruta": 5946982275.64
-        },
-        {
-          "nome": "FCDF Ativo",
-          "dotacao": 1390000000.0,
-          "realizado": 1218548851.5,
-          "projBruta": 1681849074.7,
-          "fcdf": true
-        }
+        {"nome":"GDF Ativo (Tesouro)","dotacao":5993897474.0,"realizado":2284036658.81,"projBruta":5946982275.64},
+        {"nome":"FCDF Ativo","dotacao":1390000000.0,"realizado":1218548851.5,"projBruta":1681849074.7,"fcdf":true}
       ],
       "inativo": [
-        {
-          "nome": "GDF Inativo (Tesouro)",
-          "dotacao": 1829478106.0,
-          "realizado": 975022968.07,
-          "projBruta": 2055925918.92
-        },
-        {
-          "nome": "FCDF Inativo",
-          "dotacao": 3120000000.0,
-          "realizado": 1868806062.76,
-          "projBruta": 3863344989.67,
-          "fcdf": true
-        }
+        {"nome":"GDF Inativo (Tesouro)","dotacao":1829478106.0,"realizado":975022968.07,"projBruta":2055925918.92},
+        {"nome":"FCDF Inativo","dotacao":3120000000.0,"realizado":1868806062.76,"projBruta":3863344989.67,"fcdf":true}
       ]
     },
-    "Saúde": {
+    "Sa\u00fade": {
       "ativo": [
-        {
-          "nome": "GDF Ativo (Tesouro)",
-          "dotacao": 3209360268.0,
-          "realizado": 1026653226.48,
-          "projBruta": 2631748922.23
-        },
-        {
-          "nome": "FCDF Ativo",
-          "dotacao": 4397673121.0,
-          "realizado": 2537523711.27,
-          "projBruta": 4968084090.94,
-          "fcdf": true
-        }
+        {"nome":"GDF Ativo (Tesouro)","dotacao":3209360268.0,"realizado":1026653226.48,"projBruta":2631748922.23},
+        {"nome":"FCDF Ativo","dotacao":4397673121.0,"realizado":2537523711.27,"projBruta":4968084090.94,"fcdf":true}
       ],
       "inativo": [
-        {
-          "nome": "GDF Inativo (Tesouro)",
-          "dotacao": 864129337.0,
-          "realizado": 464604976.72,
-          "projBruta": 982918260.3
-        },
-        {
-          "nome": "FCDF Inativo",
-          "dotacao": 1880000000.0,
-          "realizado": 1129855638.4,
-          "projBruta": 2330722391.55,
-          "fcdf": true
-        }
+        {"nome":"GDF Inativo (Tesouro)","dotacao":864129337.0,"realizado":464604976.72,"projBruta":982918260.3},
+        {"nome":"FCDF Inativo","dotacao":1880000000.0,"realizado":1129855638.4,"projBruta":2330722391.55,"fcdf":true}
       ]
     },
     "Demais GDF": {
       "ativo": [
-        {
-          "nome": "GDF Ativo — Demais (Tesouro)",
-          "dotacao": 6760974225.0,
-          "realizado": 3278973792.97,
-          "projBruta": 7010305273.14
-        }
+        {"nome":"GDF Ativo \u2014 Demais Executivo","dotacao":6760974225.0,"realizado":3278973792.97,"projBruta":7010305273.14},
+        {"nome":"PMDF Ativo","dotacao":23436737.0,"realizado":9744747.75,"projBruta":22526376.34},
+        {"nome":"CBMDF Ativo","dotacao":14572757.0,"realizado":8383230.57,"projBruta":8603156.44},
+        {"nome":"Pol\u00edcia Civil Ativo","dotacao":110352407.0,"realizado":52230221.46,"projBruta":103513844.36}
       ],
       "inativo": [
-        {
-          "nome": "GDF Inativo — Demais (Tesouro)",
-          "dotacao": 3036840815.0,
-          "realizado": 1378321613.61,
-          "projBruta": 2897062158.13
-        },
-        {
-          "nome": "GDF Inativo — Fundo Capitalizado",
-          "dotacao": 672441947.0,
-          "realizado": 952631.99,
-          "projBruta": 1761055.02
-        }
+        {"nome":"GDF Inativo \u2014 Demais (Sub 1)","dotacao":3036840815.0,"realizado":1378321613.61,"projBruta":2897062158.13},
+        {"nome":"PMDF Inativo (Sub 9)","dotacao":25214901.0,"realizado":14390185.86,"projBruta":29727654.29},
+        {"nome":"CBMDF Inativo (Sub 10)","dotacao":16061851.0,"realizado":8051065.9,"projBruta":16506626.56}
+      ]
+    },
+    "Legislativo": {
+      "ativo": [
+        {"nome":"GDF Ativo \u2014 Legislativo (C\u00e2mara + TCDF)","dotacao":1233144072.0,"realizado":612837109.51,"projBruta":1206170460.96}
+      ],
+      "inativo": [
+        {"nome":"GDF Inativo \u2014 C\u00e2mara Legislativa (Sub 2)","dotacao":201367963.0,"realizado":91173490.17,"projBruta":225352003.54},
+        {"nome":"GDF Inativo \u2014 TCDF (Sub 3)","dotacao":323933384.0,"realizado":143881234.48,"projBruta":300842820.84}
+      ]
+    },
+    "Defensoria": {
+      "ativo": [
+        {"nome":"GDF Ativo \u2014 Defensoria","dotacao":347879862.0,"realizado":181458617.71,"projBruta":375418971.73}
+      ],
+      "inativo": [
+        {"nome":"GDF Inativo \u2014 Defensoria (Sub 7)","dotacao":59186661.0,"realizado":27643759.57,"projBruta":57324588.43}
       ]
     }
   },
   "EXCESSOS": {
-    "Educação": {
-      "ativo": 0,
-      "inativo": 158527000
-    },
-    "Saúde": {
-      "ativo": 0,
-      "inativo": 350000000
-    },
-    "Demais GDF": {
-      "ativo": 0,
-      "inativo": 0
-    }
+    "Educa\u00e7\u00e3o": {"ativo":0,"inativo":158527000},
+    "Sa\u00fade": {"ativo":0,"inativo":350000000},
+    "Demais GDF": {"ativo":0,"inativo":0},
+    "Legislativo": {"ativo":0,"inativo":0},
+    "Defensoria": {"ativo":0,"inativo":0}
   },
-  "SEM_COMPENSACAO": [
-    "Demais GDF"
-  ]
+  "MEMORIA_FORA_DOS_TOTAIS": [
+    {"nome":"Fundo Capitalizado (Inativo \u2014 Sub 8)","dotacao":672441947.0,"realizado":952631.99,"projBruta":1761055.02,
+     "obs":"Superavit permanentemente bloqueado \u2014 recursos vinculados do novo fundo capitalizado."},
+    {"nome":"Seguran\u00e7a FCDF (COUGs 170394/170395/170484)","dotacao":null,"realizado":5163971690.07,"projBruta":null,
+     "obs":"Folha de PMDF/CBMDF/PC custeada pelo Fundo Constitucional \u2014 obriga\u00e7\u00e3o da Uni\u00e3o, fora do risco fiscal do Tesouro DF."}
+  ],
+  "SEM_COMPENSACAO": ["Demais GDF"]
 };
 // ==== DADOS:FIM ====
 // ══════════════════════════════════════════════════════════════
@@ -481,10 +453,9 @@ function renderSetor(nome){
     compHtml = `
     <div class="note-box">
       <b>Nota:</b> o setor ${nome} é custeado exclusivamente pelo <b>Tesouro do GDF</b> — não possui parcela FCDF, portanto não há
-      complemento a demonstrar. A linha "Fundo Capitalizado" refere-se ao regime de previdência capitalizado (execução residual).
-      O <b>saldo projetado</b> da linha TOTAL e do KPI considera apenas os grupos deficitários: a folga projetada do Inativo
-      (inclusive Fundo Capitalizado) <b>não é utilizada para abater o déficit do Ativo</b> — remanejamentos entre esses grupos
-      dependem de crédito próprio.
+      complemento a demonstrar. O <b>saldo projetado</b> da linha TOTAL e do KPI considera apenas os grupos deficitários: a folga
+      projetada do Inativo <b>não é utilizada para abater o déficit do Ativo</b> — remanejamentos entre esses grupos dependem de
+      crédito próprio.${nome==='Demais GDF' ? ' Este setor inclui a <b>Segurança Pública</b> na parcela do Tesouro (PMDF, CBMDF e Polícia Civil), em linhas próprias; a parcela custeada pelo FCDF está fora de escopo. O <b>Fundo Capitalizado</b> não integra os totais — consta apenas no quadro de memória da Visão Geral.' : ''}
     </div>`;
   }
 
@@ -546,7 +517,7 @@ function renderSetor(nome){
 }
 
 // ══════════════════════════════════════════════════════════════
-// RENDER: visão geral (consolidado Educação + Saúde + Demais GDF)
+// RENDER: visão geral (Educação + Saúde + Demais GDF + Legislativo + Defensoria)
 // ══════════════════════════════════════════════════════════════
 function renderGeral(){
   const totaisSetor = SETOR_NOMES.map(nome=>{
@@ -565,7 +536,7 @@ function renderGeral(){
   const fcdfDot = dot - tesouroDot;
 
   document.getElementById('kpi-geral').innerHTML = `
-    <div class="kpi"><div class="label">Dotação 2026 (Educ+Saúde+Demais)</div><div class="value">${fmt(dot)}</div>
+    <div class="kpi"><div class="label">Dotação 2026 (todos os setores)</div><div class="value">${fmt(dot)}</div>
       <div class="sub">Tesouro ${fmtBi(tesouroDot)} + FCDF ${fmtBi(fcdfDot)}</div></div>
     <div class="kpi"><div class="label">Realizado Jan–${DADOS.MES_REF_NOME.split('/')[0].slice(0,3)}</div><div class="value">${fmt(realJan)}</div>
       <div class="sub">${fmtPct(realJan/dot*100)} da dotação — meta ${fmtPct(META_PCT)}</div></div>
@@ -590,7 +561,8 @@ function renderGeral(){
   });
 
   const fonteLabels = [], fonteData = [], fonteCores = [];
-  const paleta = {"Educação":['#1d6fa5','#8fb8d8'], "Saúde":['#0d7377','#8fd0ce'], "Demais GDF":['#5b6b7c','#c3ccd6']};
+  const paleta = {"Educação":['#1d6fa5','#8fb8d8'], "Saúde":['#0d7377','#8fd0ce'], "Demais GDF":['#5b6b7c','#c3ccd6'],
+                  "Legislativo":['#7d5ba6','#c4b0dc'], "Defensoria":['#b8860b','#e8d9a6']};
   SETOR_NOMES.forEach(n=>{
     const rows = [...RAW[n].ativo, ...RAW[n].inativo];
     const tes = rows.filter(r=>!r.fcdf).reduce((s,r)=>s+r.dotacao,0);
@@ -636,6 +608,18 @@ function renderGeral(){
   });
   document.getElementById('tblCompGeral').innerHTML = `${COMP_TABLE_HEAD}<tbody>${linhas.join('')}</tbody>`;
   renderCompChart('chartCompGeral', labels, proprias, complementos);
+
+  // ── memoria: itens fora de todos os totais deste painel ────────────────
+  const memHtml = (DADOS.MEMORIA_FORA_DOS_TOTAIS||[]).map(m=>`<tr>
+      <td>${m.nome}</td>
+      <td>${m.dotacao==null?'—':n0(m.dotacao)}</td>
+      <td>${m.realizado==null?'—':n0(m.realizado)}</td>
+      <td>${m.projBruta==null?'—':n0(m.projBruta)}</td>
+      <td style="text-align:left;white-space:normal;color:var(--muted);font-size:12px">${m.obs}</td>
+    </tr>`).join('');
+  document.getElementById('tblMemoria').innerHTML = `<thead><tr>
+      <th>Item</th><th>Dotação</th><th>Realizado</th><th>Proj. Anual</th><th style="text-align:left">Por que está fora</th>
+    </tr></thead><tbody>${memHtml}</tbody>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -694,7 +678,7 @@ function renderExcessos(){
     .map(n=>`${n} ${fmt(EXCESSOS[n].ativo+EXCESSOS[n].inativo)}`).join(' + ') || '—';
 
   const kpiHtml = `
-    <div class="kpi"><div class="label">Dotação Total (Educ+Saúde+Demais)</div><div class="value">${fmt(dotTotal)}</div>
+    <div class="kpi"><div class="label">Dotação Total (todos os setores)</div><div class="value">${fmt(dotTotal)}</div>
       <div class="sub">Ativo + Inativo, Tesouro + FCDF</div></div>
     <div class="kpi deficit"><div class="label">Déficit Projetado (original)</div><div class="value">${fmt(Math.abs(saldoOrigTotal))}</div>
       <div class="sub">Último Mês, sem excessos — folgas não compensam</div></div>
